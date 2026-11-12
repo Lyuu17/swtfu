@@ -71,14 +71,14 @@ clamped target alongside scalar time; see
 
 ## Controller reconnect and launch-movie skip
 
-Both Apply commands now also run `ControllerFix.py` (runtime only, like the other fixes).
+Both Apply commands now also run `swtfu/controller.py` (runtime only, like the other fixes).
 - A controller that disconnects mid-game (battery, cable) works again once reconnected. The original game
   switches to a DirectInput fallback on disconnect and never switches back, discarding the reconnected
   XInput pad. The fix makes a successful XInput read win; DirectInput-only controllers are unchanged.
 - The launch movies before the main menu can be skipped immediately with any key or controller button.
   Story movies and cutscenes keep their original skip rules.
 Apply while the launch movies play (the Borderless command does this automatically when it starts the game).
-`python ControllerFix.py --inspect` shows whether the fixes are active. Restarting the game removes them.
+`python -m swtfu.controller --inspect` shows whether the fixes are active. Restarting the game removes them.
 
 ## What changes
 
@@ -132,10 +132,29 @@ Supported original executable SHA-256:
 For inspection without changes:
 
 ```powershell
-python SWTFU60.py --inspect
+python -m swtfu.fps --inspect
 ```
 
 `analysis/probe_timing.py` is a read-only timing probe. Its clock measurements
 are not GPU-present or physics-solver call measurements. Decoded images and
 decompiled files under `analysis` are investigation artifacts, not patches;
 do not copy them into the game installation.
+
+## Repository layout
+
+| Path | What |
+|------|------|
+| `*.cmd` | Double-click launchers (run from this folder). |
+| `swtfu/game.py` | Attach to the running game; hash/signature checks; memory reads. |
+| `swtfu/patching.py` | Shared patch engine: thread freeze, verified byte swap, `ShortCode` assembler. |
+| `swtfu/fps/` | 60 FPS profile: `profile.py` (fixed byte patches + apply/rollback), helper hooks `physics_smoothing`, `camera_smoothing`, `input_timing`, `update_rate`. CLI: `python -m swtfu.fps --apply/--restore/--inspect`. |
+| `swtfu/borderless.py` | Borderless window setup and the combined launcher. |
+| `swtfu/controller.py` | Controller reconnect and launch-movie skip. |
+| `swtfu/renderer_reset.py`, `windowed_playback.py`, `movie_messages.py` | Resize/reset, background playback and movie message-pump fixes. |
+| `swtfu/frame_pacing.py`, `hang_diagnostics.py` | Read-only diagnostics. |
+| `60FPS_ISSUES.md` | Per-issue 60 FPS investigation tracker. |
+| `analysis/` | Research: audits, probes, fixtures, notes (`STATUS.md`, `FPS_AUDIT.md`). |
+| `native/` | C++ research prototypes. |
+
+Run `python check.py` after changing anything in `swtfu/`; it runs the
+runtime-helper tests (no game needed).

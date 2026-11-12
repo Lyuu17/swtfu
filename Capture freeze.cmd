@@ -1,4 +1,4 @@
 @echo off
 cd /d "%~dp0"
-python "%~dp0HangDiagnostics.py" --capture
+python -m swtfu.hang_diagnostics --capture
 pause

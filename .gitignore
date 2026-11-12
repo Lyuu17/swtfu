@@ -31,3 +31,4 @@ Config.before-borderless.xml
 
 __pycache__/
 *.pyc
+analysis/watch-selftest/
