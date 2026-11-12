@@ -28,6 +28,12 @@ PATCHES = (
     # updates/s it moves 2x per second (PCGamingWiki: gripped objects drift up, worse
     # at 60). Load the existing 1/60 float (0xF35118) instead of 1/30 (0xF34DA8).
     ("force_grip_integrate_step", 0x9E4C1E, bytes.fromhex("f30f1005a84df300"), bytes.fromhex("f30f10051851f300")),
+    # Same integrator shape in the camera behaviour (sub_9E5790): pos + (1/30) * velocity.
+    ("camera_integrate_step", 0x9E5821, bytes.fromhex("f30f1005a84df300"), bytes.fromhex("f30f10051851f300")),
+    # sub_806130 (per update via sub_407D50 <- GameLoop_FrameStep) passes a hardcoded
+    # 1/30 as the dt of sub_803190 (per-channel timers) and of vfunc +0x8C.
+    ("channel_timers_dt", 0x80613C, bytes.fromhex("d905a84df300"), bytes.fromhex("d9051851f300")),
+    ("channel_vfunc_dt", 0x806163, bytes.fromhex("d905a84df300"), bytes.fromhex("d9051851f300")),
     # Ports of TFU1 fixes (same engine code, matched by shape; see docs/tfu2-60fps.md).
     # DMM_ContactMessages (0xA56220): `frame - stamp > 30` on the per-update counter
     # dword_13CB13C. >61 keeps the 31/30 s interval at 60 updates/s.
