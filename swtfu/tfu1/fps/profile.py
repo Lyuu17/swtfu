@@ -4,7 +4,7 @@ import struct
 import time
 
 from swtfu.patching import apply_code_patch, FrozenThreads, CodeBusy
-from swtfu.fps import physics_smoothing, camera_smoothing, input_timing, update_rate
+from swtfu.tfu1.fps import physics_smoothing, camera_smoothing, input_timing, update_rate
 
 HELPERS = (physics_smoothing, camera_smoothing, input_timing, update_rate)
 

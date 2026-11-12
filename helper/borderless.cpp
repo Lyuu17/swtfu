@@ -316,6 +316,7 @@ int borderless_restore() {
 
 int borderless_inspect() {
     Game game(find_game(), false);
+    game.require("tfu1", "Borderless mode");
     Display d = game_display(game);
     std::cout << "pid " << game.pid << "\nactive_config " << utf8(active_config(game))
               << "\nwindowed " << d.windowed << "\nsize " << d.width << "x" << d.height << std::endl;
@@ -334,6 +335,7 @@ int borderless_apply(bool fps60, bool watch_hangs) {
             if (std::string(e.what()) != kNotRunning) throw;
             game = launch_and_wait();
         }
+        game->require("tfu1", "Borderless mode");
         std::wstring config = active_config(*game);
         log.set("pid", Json::num((unsigned long long)game->pid));
         log.set("active_config", Json::str(utf8(config)));
@@ -346,7 +348,7 @@ int borderless_apply(bool fps60, bool watch_hangs) {
         }
         {
             // Fix the healthy-device resize path before the border/size change generates WM_SIZE.
-            Game writable(game->pid, true);
+            Game writable(Found{game->pid, game->info}, true);
             log.set("controller_fixes_changed", Json::boolean(apply_controller(writable)));  // launch movies are already playing
             log.set("playback_fixes_changed", Json::boolean(apply_playback_fixes(writable)));
             log.set("renderer_reset_fix_changed", Json::boolean(apply_renderer_reset(writable)));

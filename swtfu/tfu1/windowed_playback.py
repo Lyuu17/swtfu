@@ -114,7 +114,7 @@ PATCHES = [
 
 
 def apply_playback_fixes(game):
-    from swtfu.movie_messages import apply_movie_message_fix
+    from swtfu.tfu1.movie_messages import apply_movie_message_fix
     renderer = game.u32(0x13BB5D4)
     if not renderer or game.u32(renderer + 80) != 1:
         raise RuntimeError("Background playback fixes require native windowed mode")

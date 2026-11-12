@@ -38,7 +38,8 @@ std::string capture_hang(Game& game, const std::string& reason) {
     Json meta = Json::object();
     meta.set("pid", Json::num((unsigned long long)game.pid));
     meta.set("reason", Json::str(reason));
-    try {
+    meta.set("game", Json::str(game.info->name));
+    if (game.is("tfu1")) try {
         uint32_t renderer = game.u32(0x13BB5D4);
         meta.set("hwnd", Json::num((unsigned long long)game.u32(renderer + 408)));
         meta.set("windowed", Json::num((unsigned long long)game.u32(renderer + 80)));
@@ -66,6 +67,7 @@ std::string capture_hang(Game& game, const std::string& reason) {
 }
 
 std::string watch_for_hang(Game& game, int seconds) {
+    game.require("tfu1", "Hang watch");
     HWND hwnd = (HWND)(uintptr_t)game.u32(game.u32(0x13BB5D4) + 408);
     DWORD owner = 0, thread = GetWindowThreadProcessId(hwnd, &owner);
     if (!thread || owner != game.pid) throw Error("Game window is not accessible; run the helper in your normal session");

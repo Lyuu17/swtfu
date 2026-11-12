@@ -21,6 +21,7 @@ static const char* kUsage =
 static int fps(const std::string& action) {
     if (action != "apply" && action != "restore" && action != "inspect") throw Error(kUsage);
     Game game(find_game(), action != "inspect");
+    game.require("tfu1", "The 60 FPS profile");
     if (action != "inspect") {
         bool changed = set_fps_profile(game, action == "apply" ? 60 : 30);
         std::cout << (changed ? "Changed." : "Already set.") << "\n";
@@ -31,6 +32,7 @@ static int fps(const std::string& action) {
 
 static int controller(bool inspect) {
     Game game(find_game(), !inspect);
+    game.require("tfu1", "The controller fix");
     if (!inspect) std::cout << (apply_controller(game) ? "Changed." : "Already applied.") << "\n";
     std::cout << "  controller_reconnect_and_launch_skip: " << (controller_installed(game) ? "on" : "off") << "\n";
     return 0;
@@ -62,6 +64,7 @@ static int run(int argc, char** argv) {
         double seconds = action.empty() ? 45 : std::stod(action);
         if (seconds < 1 || seconds > 300) throw Error("Use 1..300 seconds");
         Game game(find_game(), false);
+        game.require("tfu1", "Pacing capture");
         return record_pacing(game, seconds, 2);
     }
     std::cerr << kUsage;

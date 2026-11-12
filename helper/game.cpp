@@ -4,10 +4,10 @@
 #include <cstdio>
 #include <fstream>
 #include <iterator>
+#include "tables.h"
 
-static const char* kExpectedHash = "1c156705548fce9e33fa3423e75b5cbe36248319b96f4b4850bf2e8125692032";
-static const Bytes kCodeSignature = B("\x6a\x00\x6a\x00\xe8\x07\x02\x00\x00\x83\xc4\x08\xc2\x10\x00\xcc");
-const char* const kNotRunning = "Launch SWTFU through Steam first";
+const GameInfo* const kGames[2] = {&kTfu1Game, &kTfu2Game};
+const char* const kNotRunning = "Launch SWTFU or SWTFU2 through Steam first";
 
 std::string hex(uint32_t value) {
     char text[16];
@@ -60,7 +60,7 @@ std::wstring exe_dir() {
     return path.substr(0, path.find_last_of(L'\\'));
 }
 
-Game::Game(DWORD pid_, bool writable) : pid(pid_) {
+Game::Game(const Found& found, bool writable) : pid(found.pid), info(found.info) {
     // QUERY_LIMITED_INFORMATION | VM_READ, plus VM_OPERATION | VM_WRITE | QUERY_INFORMATION.
     handle = OpenProcess(0x1010 | (writable ? 0x428 : 0), FALSE, pid);
     if (!handle) fail_win("OpenProcess");
@@ -72,11 +72,13 @@ Game::Game(DWORD pid_, bool writable) : pid(pid_) {
         DWORD length = (DWORD)name.size();
         if (!QueryFullProcessImageNameW(handle, 0, name.data(), &length)) fail_win("QueryFullProcessImageNameW");
         path.assign(name.data(), length);
-        if (sha256_file(path) != kExpectedHash) throw Error("Unsupported executable hash; no changes made");
-        if (read(0x401000, 16) != kCodeSignature)
+        if (sha256_file(path) != info->sha256) throw Error("Unsupported executable hash; no changes made");
+        if (read(0x401000, (uint32_t)info->signature.size()) != info->signature)
             throw Error("Game code is not initialized or differs from the supported build");
-        context = u32(0x1240440);
-        if (context < 0x10000) throw Error("Game is not initialized yet; leave it at the main menu");
+        if (info->app_global) {
+            context = u32(info->app_global);
+            if (context < 0x10000) throw Error("Game is not initialized yet; leave it at the main menu");
+        }
     } catch (...) {
         CloseHandle(handle);
         throw;
@@ -121,14 +123,19 @@ bool Game::running() const {
     return code == STILL_ACTIVE;
 }
 
-DWORD find_game() {
+void Game::require(const char* name, const char* feature) const {
+    if (!is(name)) throw Error(std::string(feature) + " is not supported for " + info->name + " yet");
+}
+
+Found find_game() {
     HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (snapshot == INVALID_HANDLE_VALUE) fail_win("CreateToolhelp32Snapshot");
-    std::vector<DWORD> pids;
+    std::vector<Found> found;
     PROCESSENTRY32W entry = {sizeof(entry)};
     for (BOOL ok = Process32FirstW(snapshot, &entry); ok; ok = Process32NextW(snapshot, &entry))
-        if (!_wcsicmp(entry.szExeFile, L"swtfu.exe")) pids.push_back(entry.th32ProcessID);
+        for (const GameInfo* game : kGames)
+            if (!_wcsicmp(entry.szExeFile, game->exe)) found.push_back({entry.th32ProcessID, game});
     CloseHandle(snapshot);
-    if (pids.size() != 1) throw Error(pids.empty() ? kNotRunning : "Multiple games found; specify --pid");
-    return pids[0];
+    if (found.size() != 1) throw Error(found.empty() ? kNotRunning : "More than one game is running; close one");
+    return found[0];
 }
