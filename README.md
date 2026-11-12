@@ -7,7 +7,7 @@ TFU1 also gets borderless fullscreen, controller reconnect and skippable launch 
 | Game | Status |
 |---|---|
 | TFU1 (`SWTFU.exe`, SHA-256 `1c156705…92032`) | 60 FPS profile, borderless, controller: done. See [`docs/tfu1-60fps.md`](docs/tfu1-60fps.md). |
-| TFU2 (`SWTFU2.exe`, SHA-256 `79874d83…65167`) | Capped at 30. Cap mapped; per-update fixes being ported. See [`docs/tfu2-60fps.md`](docs/tfu2-60fps.md). |
+| TFU2 (`SWTFU2.exe`, SHA-256 `79874d83…65167`) | 60 FPS profile **experimental** (Apply/Restore 60 FPS.cmd): cap, cutscenes, DMM, cloth, smoothing and trails ported; camera smoothing and Force-grip steering still open. See [`docs/tfu2-60fps.md`](docs/tfu2-60fps.md). |
 
 Nothing on disk is modified. `SWTFU-Helper.exe` recognises whichever game is running
 (process name, executable hash and code signature) and patches the **running** game's memory.
@@ -15,7 +15,7 @@ Restarting the game removes every change. No Python or runtime is required.
 
 ## Use
 
-Start the game through Steam, then double-click one of (TFU1 for now; TFU2 commands report "not supported yet" until its fixes land):
+Start the game through Steam, then double-click one of (TFU2: only the 60 FPS launchers apply; the other commands report "not supported for tfu2 yet"):
 
 | Launcher | Does |
 |---|---|
