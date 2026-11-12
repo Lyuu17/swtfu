@@ -26,8 +26,33 @@ def run(label, command):
     return result.returncode == 0
 
 
+IMAGES = {"tfu1": ROOT / "analysis" / "SWTFU.decoded.exe", "tfu2": ROOT / "analysis" / "tfu2" / "SWTFU2.decoded.exe"}
+
+
+def check_sites():
+    """Every profile site's original bytes must be at that address in the decoded image."""
+    import importlib
+    import pefile
+    ok = True
+    for game, image in IMAGES.items():
+        if not image.exists():
+            print(f"skip {game} site check (no {image.name}; see tools/decode_exe.py)")
+            continue
+        pe = pefile.PE(str(image), fast_load=True)
+        base = pe.OPTIONAL_HEADER.ImageBase
+        profile = importlib.import_module(f"swtfu.{game}.fps.profile")
+        sites = [(name, address, original) for name, address, original, _ in profile.PATCHES]
+        sites += [(f"{m.__name__}[{i}]", s[0], s[1]) for m in profile.HELPERS for i, s in enumerate(m.SITES)]
+        bad = [name for name, address, original in sites if pe.get_data(address - base, len(original)) != original]
+        print(f"{'ok  ' if not bad else 'FAIL'} {game} patch sites match decoded image ({len(sites)} sites){': ' + ', '.join(bad) if bad else ''}")
+        ok &= not bad
+    return ok
+
+
 def main():
+    sys.path.insert(0, str(ROOT))
     ok = all([run(name, [sys.executable, str(ROOT / "analysis" / f"{name}.py")]) for name in TESTS])
+    ok &= check_sites()
     tables = ROOT / "helper" / "tables.h"
     before = tables.read_bytes()
     ok &= run("tables.h generation", [sys.executable, str(ROOT / "tools" / "gen_tables.py")])

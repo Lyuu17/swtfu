@@ -13,6 +13,7 @@ from swtfu.tfu1 import controller, movie_messages, renderer_reset, windowed_play
 from swtfu.tfu1.fps import profile, update_rate
 from swtfu.tfu1 import game as tfu1_game
 from swtfu.tfu2 import game as tfu2_game
+from swtfu.tfu2.fps import profile as tfu2_profile
 
 
 def b(data):
@@ -26,38 +27,39 @@ for var, module in (("kTfu1Game", tfu1_game), ("kTfu2Game", tfu2_game)):
     out.append(f'static const GameInfo {var} = {{"{name}", L"{module.EXE}", "{module.EXPECTED_HASH}", {b(module.CODE_SIGNATURE)}, 0x{module.APP_GLOBAL:X}}};')
 out.append("")
 
-out.append("static const FixedPatch kFpsPatches[] = {")
-for name, address, original, patched in profile.PATCHES:
-    out.append(f"    {{\"{name}\", 0x{address:X}, {b(original)}, {b(patched)}}},")
-out += ["};", f"static const uint32_t kCinematicLimitAddress = 0x{profile.ADDRESS:X};",
-        f"static const uint32_t kCinematicState = 0x{profile.CINEMATIC_STATE:X};",
-        f"static const uint32_t kSavedLimitOffset = {profile.SAVED_LIMIT_OFFSET};", ""]
-
 site_names = {
     "physics_smoothing": ("timescale_smoothing", "physics_smoothing"),
     "camera_smoothing": ("camera_eye_xz", "camera_eye_y", "camera_target_xz", "camera_target_y"),
     "input_timing": ("mouse_horizontal_timing", "mouse_vertical_timing", "angular_yaw_smoothing", "angular_pitch_smoothing"),
     "update_rate": tuple(site[2] for site in update_rate.SITES),
 }
-for module in profile.HELPERS:
-    short = module.__name__.rsplit(".", 1)[1]
-    names = site_names[short]
-    assert len(names) == len(module.SITES)
-    stride = getattr(module, "STRIDE", 64)
-    out.append(f"static const HookSite k_{short}_sites[] = {{")
-    for name, site in zip(names, module.SITES):
-        out.append(f"    {{\"{name}\", 0x{site[0]:X}, {b(site[1])}}},")
+for game, fps, var in (("tfu1", profile, "kTfu1Fps"), ("tfu2", tfu2_profile, "kTfu2Fps")):
+    out.append(f"static const FixedPatch k_{game}_fps_patches[] = {{")
+    for name, address, original, patched in fps.PATCHES:
+        out.append(f"    {{\"{name}\", 0x{address:X}, {b(original)}, {b(patched)}}},")
     out.append("};")
-    sources = getattr(module, "SOURCES", ())
-    out.append(f"static const SourceCheck k_{short}_sources[] = {{")
-    for address, original in sources or ((0, b""),):
-        out.append(f"    {{0x{address:X}, {b(original)}}},")
-    out.append("};")
-    out.append(f"static const HookGroup k_{short} = {{\"{short}\", k_{short}_sites, {len(module.SITES)}, "
-               f"{b(module.CODE)}, {stride}, k_{short}_sources, {len(sources)}}};")
-out.append("static const HookGroup* const kFpsHelpers[] = {" + ", ".join(
-    f"&k_{m.__name__.rsplit('.', 1)[1]}" for m in profile.HELPERS) + "};")
-out.append("")
+    groups = []
+    for module in fps.HELPERS:
+        short = module.__name__.rsplit(".", 1)[1]
+        names = site_names[short]
+        assert len(names) == len(module.SITES)
+        prefix = f"k_{game}_{short}"
+        out.append(f"static const HookSite {prefix}_sites[] = {{")
+        for name, site in zip(names, module.SITES):
+            out.append(f"    {{\"{name}\", 0x{site[0]:X}, {b(site[1])}}},")
+        out.append("};")
+        sources = getattr(module, "SOURCES", ())
+        out.append(f"static const SourceCheck {prefix}_sources[] = {{")
+        for address, original in sources or ((0, b""),):
+            out.append(f"    {{0x{address:X}, {b(original)}}},")
+        out.append("};")
+        out.append(f"static const HookGroup {prefix} = {{\"{short}\", {prefix}_sites, {len(module.SITES)}, "
+                   f"{b(module.CODE)}, {getattr(module, 'STRIDE', 64)}, {prefix}_sources, {len(sources)}}};")
+        groups.append(f"&{prefix}")
+    out.append(f"static const HookGroup* const k_{game}_fps_helpers[] = {{{', '.join(groups) or 'nullptr'}}};")
+    out.append(f"static const FpsProfile {var} = {{k_{game}_fps_patches, {len(fps.PATCHES)}, k_{game}_fps_helpers, {len(groups)}, "
+               f"0x{fps.LIMIT_OFFSET:X}, 0x{fps.CINEMATIC_STATE:X}, 0x{fps.SAVED_LIMIT_OFFSET:X}}};")
+    out.append("")
 
 out += [f"static const uint32_t kPadSite = 0x{controller.PAD_SITE:X};",
         f"static const Bytes kPadOriginal = {b(controller.PAD_ORIGINAL)};",

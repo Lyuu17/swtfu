@@ -21,6 +21,15 @@ struct HookGroup {
     Bytes code; uint32_t stride; const SourceCheck* sources; int source_count;
 };
 
+// One game's 60 FPS profile: fixed byte patches, helper hook groups, where the
+// cap float lives ([app] + limit_offset) and where cutscenes save it
+// ([cinematic_state] + saved_offset, 0 = no active cutscene).
+struct FpsProfile {
+    const FixedPatch* patches; int patch_count;
+    const HookGroup* const* helpers; int helper_count;
+    uint32_t limit_offset, cinematic_state, saved_offset;
+};
+
 struct Error : std::runtime_error {
     explicit Error(const std::string& message) : std::runtime_error(message) {}
 };

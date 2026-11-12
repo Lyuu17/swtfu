@@ -16,6 +16,7 @@ PATCHED = b"\x90" * len(ORIGINAL)
 # Add "cinematic_limit" here to keep the original 30 FPS cinematics instead.
 KEEP_ORIGINAL = set()
 CINEMATIC_STATE = 0x12A1EF4
+LIMIT_OFFSET = 0x150  # cap float at [gApp] + 0x150
 SAVED_LIMIT_OFFSET = 324
 PATCHES = (
     ("cinematic_limit", ADDRESS, ORIGINAL, PATCHED),
