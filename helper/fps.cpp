@@ -40,7 +40,7 @@ static GroupState validate(Game& game, const HookGroup& group) {
     return state;
 }
 
-static bool set_enabled(Game& game, const HookGroup& group, bool enabled) {
+bool set_hook_group(Game& game, const HookGroup& group, bool enabled) {
     GroupState state = validate(game, group);
     if (enabled && !state.root) state.root = publish_helper_page(game, group.code);
     bool changed = false;
@@ -88,7 +88,7 @@ static bool apply_frozen(Game& game, const FpsProfile& p, int fps) {
             const FixedPatch& patch = p.patches[i];
             changed |= apply_code_patch(game, patch.address, before.fixed[i], fps == 60 ? patch.patched : patch.original);
         }
-        for (int g = 0; g < p.helper_count; ++g) changed |= set_enabled(game, *p.helpers[g], fps == 60);
+        for (int g = 0; g < p.helper_count; ++g) changed |= set_hook_group(game, *p.helpers[g], fps == 60);
         if (before.cinematic && before.saved != fps) {
             game.write_f32(before.cinematic + p.saved_offset, (float)fps);
             changed = true;

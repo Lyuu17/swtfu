@@ -5,6 +5,7 @@
 #include "fixes.h"
 #include "fps.h"
 #include "json.h"
+#include "tables.h"
 #include <shellapi.h>
 #include <tlhelp32.h>
 #include <chrono>
@@ -372,10 +373,13 @@ int borderless_apply(bool fps60, bool watch_hangs) {
             // TFU2 handles resizes itself (its D3D reset accepts a pending resize) and its controller
             // fallback is not sticky, so only the window style changes. Windowed mode is the
             // game's own Win.Windowed option.
-            if (fps60) {
+            {
                 Game writable(Found{game->pid, game->info}, true);
-                log.set("fps_limit_changed", Json::boolean(set_fps_profile(writable, 60)));
-                std::cout << "TFU2 60 FPS is experimental (docs/tfu2-60fps.md)." << std::endl;
+                log.set("movie_messages_changed", Json::boolean(set_hook_group(writable, kTfu2MovieMessages, true)));
+                if (fps60) {
+                    log.set("fps_limit_changed", Json::boolean(set_fps_profile(writable, 60)));
+                    std::cout << "TFU2 60 FPS is experimental (docs/tfu2-60fps.md)." << std::endl;
+                }
             }
             apply_window(*game, state);
             std::cout << "Borderless applied." << (watch_hangs ? " (Hang watch is TFU1-only.)" : "") << std::endl;

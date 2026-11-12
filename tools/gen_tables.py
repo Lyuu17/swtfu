@@ -14,6 +14,7 @@ from swtfu.tfu1.fps import profile, update_rate
 from swtfu.tfu1 import game as tfu1_game
 from swtfu.tfu2 import game as tfu2_game
 from swtfu.tfu2.fps import profile as tfu2_profile
+from swtfu.tfu2 import movie_messages as tfu2_movie
 
 
 def b(data):
@@ -60,6 +61,14 @@ for game, fps, var in (("tfu1", profile, "kTfu1Fps"), ("tfu2", tfu2_profile, "kT
     out.append(f"static const FpsProfile {var} = {{k_{game}_fps_patches, {len(fps.PATCHES)}, k_{game}_fps_helpers, {len(groups)}, "
                f"0x{fps.LIMIT_OFFSET:X}, 0x{fps.CINEMATIC_STATE:X}, 0x{fps.SAVED_LIMIT_OFFSET:X}}};")
     out.append("")
+
+# TFU2 movie message pump (applied by borderless, not part of the FPS profile).
+out.append("static const HookSite k_tfu2_movie_sites[] = {")
+for address, original, name in tfu2_movie.SITES:
+    out.append(f"    {{\"{name}\", 0x{address:X}, {b(original)}}},")
+out += ["};", "static const SourceCheck k_tfu2_movie_sources[] = {{0x0, B(\"\")}};",
+        f"static const HookGroup kTfu2MovieMessages = {{\"movie_messages\", k_tfu2_movie_sites, {len(tfu2_movie.SITES)}, "
+        f"{b(tfu2_movie.CODE)}, {tfu2_movie.STRIDE}, k_tfu2_movie_sources, 0}};", ""]
 
 out += [f"static const uint32_t kPadSite = 0x{controller.PAD_SITE:X};",
         f"static const Bytes kPadOriginal = {b(controller.PAD_ORIGINAL)};",
