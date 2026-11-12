@@ -23,4 +23,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: SWTFU-Helper
-          path: SWTFU-Helper.exe
+          path: |
+            SWTFU-Helper.exe
+            *.cmd
