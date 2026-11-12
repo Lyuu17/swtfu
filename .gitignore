@@ -1,0 +1,33 @@
+# Game binaries and IDA databases (copyrighted / large)
+*.exe
+*.dll
+*.i64
+*.id0
+*.id1
+*.id2
+*.nam
+*.til
+
+# Build outputs
+*.obj
+*.lib
+*.exp
+*.pdb
+*.manifest
+native/build/
+
+# Generated fixtures, dumps and captures
+*.bin
+*.dmp
+*.log
+analysis/decompiled/
+analysis/hangs/
+analysis/pacing/
+
+# Runtime state written by the helpers
+borderless-state.json
+borderless-last-run.json
+Config.before-borderless.xml
+
+__pycache__/
+*.pyc
