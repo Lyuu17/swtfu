@@ -38,8 +38,13 @@ static int controller(bool inspect) {
         std::cout << "TFU2 already handles controller reconnects; nothing to apply.\n";
         return 0;
     }
-    if (!inspect) std::cout << (apply_controller(game) ? "Changed." : "Already applied.") << "\n";
+    if (!inspect) {
+        bool changed = apply_controller(game);
+        changed |= apply_subtitle_pause(game);
+        std::cout << (changed ? "Changed." : "Already applied.") << "\n";
+    }
     std::cout << "  controller_reconnect_and_launch_skip: " << (controller_installed(game) ? "on" : "off") << "\n";
+    std::cout << "  subtitle_kept_across_pause: " << (subtitle_pause_installed(game) ? "on" : "off") << "\n";
     return 0;
 }
 

@@ -13,6 +13,7 @@ typedef std::string Bytes;
 
 struct FixedPatch { const char* name; uint32_t address; Bytes original, patched; };
 struct HookSite { const char* name; uint32_t address; Bytes original; };
+struct SubtitleSite { const char* name; uint32_t address; Bytes original; uint32_t offset; uint8_t opcode; };
 struct SourceCheck { uint32_t address; Bytes original; };
 // A set of call sites redirected to helpers that live in one allocated page,
 // `stride` bytes apart (helper i = root + stride * i). Mirrors swtfu/fps/*.py.

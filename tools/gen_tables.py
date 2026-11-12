@@ -9,7 +9,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from swtfu.tfu1 import controller, movie_messages, renderer_reset, windowed_playback as playback
+from swtfu.tfu1 import controller, movie_messages, renderer_reset, subtitle_pause, windowed_playback as playback
 from swtfu.tfu1.fps import profile, update_rate
 from swtfu.tfu1 import game as tfu1_game
 from swtfu.tfu2 import game as tfu2_game
@@ -87,6 +87,12 @@ out += [f"static const uint32_t kMovieAddress = 0x{movie_messages.ADDRESS:X};",
         f"static const uint32_t kMovieWaitOffset = {movie_messages.WAIT_OFFSET};",
         "static const uint32_t kMovieWaitSites[] = {" + ", ".join(f"0x{s:X}" for s in movie_messages.WAIT_SITES) + "};",
         f"static const Bytes kMovieWaitOriginal = {b(movie_messages.WAIT_ORIGINAL)};", ""]
+
+out += [f"static const Bytes kSubtitleCode = {b(subtitle_pause.CODE)};",
+        "static const SubtitleSite kSubtitleSites[] = {"]
+for name, address, original, offset, opcode in subtitle_pause.SITES:
+    out.append(f"    {{\"{name}\", 0x{address:X}, {b(original)}, 0x{offset:X}, 0x{opcode:X}}},")
+out += ["};", ""]
 
 out.append("static const FixedPatch kPlaybackPatches[] = {")
 for name, address, original, patched in playback.PATCHES:

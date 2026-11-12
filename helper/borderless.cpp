@@ -400,6 +400,7 @@ int borderless_apply(bool fps60, bool watch_hangs) {
             // Fix the healthy-device resize path before the border/size change generates WM_SIZE.
             Game writable(Found{game->pid, game->info}, true);
             log.set("controller_fixes_changed", Json::boolean(apply_controller(writable)));  // launch movies are already playing
+            log.set("subtitle_pause_changed", Json::boolean(apply_subtitle_pause(writable)));
             log.set("playback_fixes_changed", Json::boolean(apply_playback_fixes(writable)));
             log.set("renderer_reset_fix_changed", Json::boolean(apply_renderer_reset(writable)));
             if (fps60) log.set("fps_limit_changed", Json::boolean(set_fps_profile(writable, 60)));

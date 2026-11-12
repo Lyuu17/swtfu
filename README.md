@@ -49,6 +49,8 @@ Command line: `SWTFU-Helper.exe` with no arguments lists every command
 - **Controller.** A pad that disconnects mid-game (battery, cable) works again
   when it reconnects. The launch movies before the main menu can be skipped
   with any button. Story movies keep their original rules.
+- **Subtitles after pause.** The line on screen when you open the pause menu
+  comes back for its remaining time when you resume (original game bug).
 
 Known open items and the evidence for each fix are tracked per game in `docs/`.
 

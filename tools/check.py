@@ -43,6 +43,9 @@ def check_sites():
         profile = importlib.import_module(f"swtfu.{game}.fps.profile")
         sites = [(name, address, original) for name, address, original, _ in profile.PATCHES]
         sites += [(f"{m.__name__}[{i}]", s[0], s[1]) for m in profile.HELPERS for i, s in enumerate(m.SITES)]
+        if game == "tfu1":
+            subtitle = importlib.import_module("swtfu.tfu1.subtitle_pause")
+            sites += [(name, address, original) for name, address, original, _, _ in subtitle.SITES]
         if game == "tfu2":
             movie = importlib.import_module("swtfu.tfu2.movie_messages")
             sites += [(f"movie_messages[{i}]", s[0], s[1]) for i, s in enumerate(movie.SITES)]

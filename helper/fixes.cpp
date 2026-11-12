@@ -45,6 +45,39 @@ bool apply_controller(Game& game) {
 
 bool controller_installed(Game& game) { return controller_cave(game) != 0; }
 
+// ---- subtitle kept across the pause menu (swtfu/tfu1/subtitle_pause.py)
+
+static Bytes subtitle_page(uint32_t data) { return kSubtitleCode + Bytes((const char*)&data, 4); }
+
+static uint32_t subtitle_cave(Game& game) {
+    const SubtitleSite& first = kSubtitleSites[0];
+    Bytes now = game.read(first.address, first.original.size());
+    uint32_t cave = (uint8_t)now[0] == first.opcode ? rel32_target(first.address, now) - first.offset : 0;
+    bool original = true, hooked = cave != 0;
+    for (const SubtitleSite& site : kSubtitleSites) {
+        Bytes current = game.read(site.address, site.original.size());
+        original = original && current == site.original;
+        hooked = hooked && current == rel32(site.opcode, site.address, cave + site.offset, site.original.size());
+    }
+    if (original) return 0;
+    if (!hooked || game.read(cave, kSubtitleCode.size()) != kSubtitleCode)
+        throw Error("Unsupported subtitle code (older helper?); restart the game");
+    return cave;
+}
+
+bool apply_subtitle_pause(Game& game) {
+    if (subtitle_cave(game)) return false;
+    void* data = VirtualAllocEx(game.handle, nullptr, 4096, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);  // zeroed: state 0
+    if (!data) fail_win("VirtualAllocEx");
+    uint32_t cave = publish_helper_page(game, subtitle_page((uint32_t)(uintptr_t)data));
+    // Frame (re-show) hook last; the others only record state until it exists.
+    for (const SubtitleSite& site : kSubtitleSites)
+        apply_code_patch(game, site.address, site.original, rel32(site.opcode, site.address, cave + site.offset, site.original.size()));
+    return true;
+}
+
+bool subtitle_pause_installed(Game& game) { return subtitle_cave(game) != 0; }
+
 // ---- movie message pump
 
 static Bytes wait_hook(uint32_t site, uint32_t helper) {
