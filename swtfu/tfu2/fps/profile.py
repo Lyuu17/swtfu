@@ -23,6 +23,11 @@ PATCHES = (
     # `fld [ebp+0Ch]` (0x610439) is what `fstp [esp+50h]` stores; x87 stack stays balanced.
     ("cinematic_camera_exact_time", 0x61043C,
      bytes.fromhex("dd05f04af300dcc9d9c9dc053044f300e80fa0e7ff8944244cda7c244c"), b"\x90" * 29),
+    # ForceGrip_IntegratePos_1over30 (0x9E4BE0, per update via ForceGrip_HeldPosUpdate
+    # 0x9FC930): held object pos = pos + (1/30) * velocity, a hardcoded step. At 60
+    # updates/s it moves 2x per second (PCGamingWiki: gripped objects drift up, worse
+    # at 60). Load the existing 1/60 float (0xF35118) instead of 1/30 (0xF34DA8).
+    ("force_grip_integrate_step", 0x9E4C1E, bytes.fromhex("f30f1005a84df300"), bytes.fromhex("f30f10051851f300")),
     # Ports of TFU1 fixes (same engine code, matched by shape; see docs/tfu2-60fps.md).
     # DMM_ContactMessages (0xA56220): `frame - stamp > 30` on the per-update counter
     # dword_13CB13C. >61 keeps the 31/30 s interval at 60 updates/s.
