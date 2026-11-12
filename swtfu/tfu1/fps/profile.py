@@ -12,7 +12,7 @@ ADDRESS = 0x4DC461
 ORIGINAL = bytes.fromhex("f30f118250010000")  # movss [edx+150h], xmm0 (30 FPS)
 PATCHED = b"\x90" * len(ORIGINAL)
 # Cinematics run at 60 (user choice). Known gap: cutscene subtitles/crawl are
-# script-timed per update and still run fast (see 60FPS_ISSUES.md #5).
+# script-timed per update and still run fast (see tfu1-60fps.md #5).
 # Add "cinematic_limit" here to keep the original 30 FPS cinematics instead.
 KEEP_ORIGINAL = set()
 CINEMATIC_STATE = 0x12A1EF4

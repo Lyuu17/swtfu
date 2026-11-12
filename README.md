@@ -1,17 +1,21 @@
-# SWTFU 60 FPS + borderless runtime fixes
+# SWTFU 60 FPS runtime fixes
 
-Runtime fixes for the Steam PC build of *Star Wars: The Force Unleashed*:
-60 FPS without speeding up the game, borderless fullscreen, controller
-reconnect and skippable launch movies.
+Runtime fixes for the Steam PC builds of *Star Wars: The Force Unleashed* (TFU1)
+and *The Force Unleashed II* (TFU2): 60 FPS without speeding the game up.
+TFU1 also gets borderless fullscreen, controller reconnect and skippable launch movies.
 
-Nothing on disk is modified. `SWTFU-Helper.exe` patches the **running** game's
-memory after verifying the executable's SHA-256
-(`1c156705548fce9e33fa3423e75b5cbe36248319b96f4b4850bf2e8125692032`).
+| Game | Status |
+|---|---|
+| TFU1 (`SWTFU.exe`, SHA-256 `1c156705…92032`) | 60 FPS profile, borderless, controller: done. See [`docs/tfu1-60fps.md`](docs/tfu1-60fps.md). |
+| TFU2 (`SWTFU2.exe`, SHA-256 `79874d83…65167`) | Capped at 30. Cap mapped; per-update fixes being ported. See [`docs/tfu2-60fps.md`](docs/tfu2-60fps.md). |
+
+Nothing on disk is modified. `SWTFU-Helper.exe` recognises whichever game is running
+(process name, executable hash and code signature) and patches the **running** game's memory.
 Restarting the game removes every change. No Python or runtime is required.
 
 ## Use
 
-Start the game through Steam, then double-click one of:
+Start the game through Steam, then double-click one of (TFU1 for now; TFU2 commands report "not supported yet" until its fixes land):
 
 | Launcher | Does |
 |---|---|
@@ -46,8 +50,7 @@ Command line: `SWTFU-Helper.exe` with no arguments lists every command
   when it reconnects. The launch movies before the main menu can be skipped
   with any button. Story movies keep their original rules.
 
-Known open items and the evidence for each fix are tracked in
-[`docs/60FPS_ISSUES.md`](docs/60FPS_ISSUES.md).
+Known open items and the evidence for each fix are tracked per game in `docs/`.
 
 ## Repository layout
 
@@ -55,12 +58,13 @@ Known open items and the evidence for each fix are tracked in
 |---|---|
 | `*.cmd` | Launchers (call `SWTFU-Helper.exe`). |
 | `helper/` | **The shipped tool**, in C++ (`CMakeLists.txt`). `fps.cpp` is the profile transaction. `fixes.cpp` holds controller, movie, playback and renderer. `borderless.cpp` is the window and config. `diagnostics.cpp` is hang and pacing. `patching.cpp` suspends threads and swaps verified bytes. `game.cpp` attaches to the game process. `selftest.cpp` has offline checks. |
-| `helper/tables.h` | Every patch byte the tool writes. **Generated** from `swtfu/`; do not edit. |
-| `swtfu/` | Python **reference** for the patches. It defines the original/patched bytes and the helper machine code, and its install/rollback logic is tested. Not needed to run the tool. |
+| `helper/tables.h` | Every patch byte and game identity the tool uses. **Generated** from `swtfu/`; do not edit. |
+| `swtfu/` | Python **reference** for the patches. `patching.py` is shared; `tfu1/` and `tfu2/` hold each game's identity (`game.py`), patch bytes and helper machine code. The install/rollback logic is tested. Not needed to run the tool. |
 | `tools/gen_tables.py` | `swtfu/` → `helper/tables.h`. |
+| `tools/decode_exe.py` | Decrypts either game's SteamStub-wrapped exe into an image for IDA. |
 | `tools/check.py` | Developer check: Python patch tests, tables up to date, exe selftest. |
-| `docs/` | Issue tracker for the 60 FPS work. |
-| `analysis/` | Reverse-engineering research (audits, probes, fixtures, notes). See [`analysis/README.md`](analysis/README.md). |
+| `docs/` | Per-game 60 FPS trackers (`tfu1-60fps.md`, `tfu2-60fps.md`). |
+| `analysis/` | TFU1 reverse-engineering research (audits, probes, fixtures, notes), see [`analysis/README.md`](analysis/README.md). `analysis/tfu2/` holds the TFU2 analysis image and IDB. |
 
 Local-only, git-ignored files: the game executable and IDA databases,
 `borderless-state.json` (what Restore Borderless undoes),
