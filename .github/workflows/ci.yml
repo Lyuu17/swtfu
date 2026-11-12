@@ -7,7 +7,7 @@ on:
 jobs:
   helper:
     # `SWTFU-Helper verify` needs the decoded game image, which is not in the
-    # repository; run it locally after changing helper/patches.h.
+    # repository; run it locally after changing helper/tfu1.h or tfu2.h.
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4

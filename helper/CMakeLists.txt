@@ -10,7 +10,7 @@ if(NOT CMAKE_SIZEOF_VOID_P EQUAL 4)
 endif()
 
 file(GLOB SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/*.cpp)
-add_executable(SWTFU-Helper ${SOURCES} ${CMAKE_SOURCE_DIR}/patches.h)
+add_executable(SWTFU-Helper ${SOURCES} ${CMAKE_SOURCE_DIR}/tfu1.h ${CMAKE_SOURCE_DIR}/tfu2.h)
 target_compile_features(SWTFU-Helper PRIVATE cxx_std_17)
 target_compile_definitions(SWTFU-Helper PRIVATE UNICODE _UNICODE)
 target_compile_options(SWTFU-Helper PRIVATE /W4 /WX /utf-8 /EHsc)

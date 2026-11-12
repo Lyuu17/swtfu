@@ -1,6 +1,7 @@
 // `SWTFU-Helper verify <decoded.exe>`: every patch site's original bytes must be at its
 // address in the decoded image (tools/decode_exe.py). No game process is touched.
-#include "patches.h"
+#include "tfu1.h"
+#include "tfu2.h"
 #include <algorithm>
 #include <cstring>
 #include <fstream>

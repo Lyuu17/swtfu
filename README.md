@@ -52,7 +52,7 @@ Command line: `SWTFU-Helper.exe` with no arguments lists every command
 - **Subtitles after pause.** The line on screen when you open the pause menu
   comes back for its remaining time when you resume (original game bug).
 
-The evidence for each fix is in the comments of `helper/patches.h`.
+The evidence for each fix is in the comments of `helper/tfu1.h` and `helper/tfu2.h`.
 
 ## Repository layout
 
@@ -60,7 +60,7 @@ The evidence for each fix is in the comments of `helper/patches.h`.
 |---|---|
 | `*.cmd` | Launchers (call `SWTFU-Helper.exe`). |
 | `helper/` | **The tool**, in C++ (`CMakeLists.txt`). `fps.cpp` is the profile transaction. `fixes.cpp` holds controller, subtitle, movie, playback and renderer. `borderless.cpp` is the window and config. `diagnostics.cpp` is hang and pacing. `patching.cpp` suspends threads and swaps verified bytes. `game.cpp` attaches to the game process. `selftest.cpp` has offline checks; `verify.cpp` checks patch sites against a decoded image. |
-| `helper/patches.h` | Every patch byte, helper routine and game identity, with the reasoning for each fix. Machine code is one instruction per line with its disassembly. |
+| `helper/tfu1.h`, `helper/tfu2.h` | Each game's patch bytes, helper routines and identity, with the reasoning for each fix. Machine code is one instruction per line with its disassembly. |
 | `tools/decode_exe.py` | Decrypts either game's SteamStub-wrapped exe into an image for IDA and `verify` (needs `pefile`, `pycryptodome`). |
 | `.github/workflows/` | CI: x86 build, selftest. |
 
@@ -82,5 +82,5 @@ python tools/decode_exe.py "<install>\SWTFU.exe" analysis/SWTFU.decoded.exe   # 
 .\SWTFU-Helper.exe verify analysis/SWTFU.decoded.exe                         # every patch site's original bytes
 ```
 
-To change a patch, edit `helper/patches.h`, keep each instruction's disassembly
+To change a patch, edit `helper/tfu1.h` or `helper/tfu2.h`, keep each instruction's disassembly
 comment accurate, rebuild, and run `verify` against both games' decoded images.

@@ -4,7 +4,7 @@
 // ("restart the game") instead of upgraded.
 #include "fixes.h"
 #include "patching.h"
-#include "patches.h"
+#include "tfu1.h"
 
 // ---- controller reconnect + launch-movie skip
 

@@ -5,7 +5,8 @@
 #include "fixes.h"
 #include "fps.h"
 #include "json.h"
-#include "patches.h"
+#include "tfu1.h"
+#include "tfu2.h"
 #include <shellapi.h>
 #include <tlhelp32.h>
 #include <chrono>

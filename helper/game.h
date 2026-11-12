@@ -5,7 +5,7 @@
 std::string sha256_file(const std::wstring& path);
 std::wstring exe_dir();  // folder holding SWTFU-Helper.exe (state/log files go here)
 
-// Identity of one supported game build; records live in patches.h.
+// Identity of one supported game build; records live in tfu1.h / tfu2.h.
 struct GameInfo {
     const char* name;         // "tfu1" / "tfu2"
     const wchar_t* exe;       // process image name
