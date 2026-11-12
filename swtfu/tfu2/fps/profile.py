@@ -14,6 +14,13 @@ PATCHES = (
     # Edl_StoreGameState: `fld [kThirty 0xF34AF8]; fstp [eax+264h]` forces 30 for the
     # cutscene. NOP both (keeps the x87 stack balanced) so cutscenes keep the cap.
     ("cinematic_limit", 0x612D0E, bytes.fromhex("d905f84af300d99864020000"), b"\x90" * 12),
+    # Lua SetMatrixFromCameraAnimation -> sub_6103B0 rounds cutscene camera time to
+    # (int)(30t + 0.5)/30 before sampling (TFU1 0x4D95F6 did floor). At 60 the camera
+    # would step every 2nd update while props move every update (judder). NOP the
+    # fld 30 / fmul / fadd 0.5 / ftol / fidivr sequence so the exact t from
+    # `fld [ebp+0Ch]` (0x610439) is what `fstp [esp+50h]` stores; x87 stack stays balanced.
+    ("cinematic_camera_exact_time", 0x61043C,
+     bytes.fromhex("dd05f04af300dcc9d9c9dc053044f300e80fa0e7ff8944244cda7c244c"), b"\x90" * 29),
     # Ports of TFU1 fixes (same engine code, matched by shape; see docs/tfu2-60fps.md).
     # DMM_ContactMessages (0xA56220): `frame - stamp > 30` on the per-update counter
     # dword_13CB13C. >61 keeps the 31/30 s interval at 60 updates/s.

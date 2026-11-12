@@ -65,6 +65,7 @@ static const FpsProfile kTfu1Fps = {k_tfu1_fps_patches, 14, k_tfu1_fps_helpers, 
 
 static const FixedPatch k_tfu2_fps_patches[] = {
     {"cinematic_limit", 0x612D0E, B("\xd9\x05\xf8\x4a\xf3\x00\xd9\x98\x64\x02\x00\x00"), B("\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90")},
+    {"cinematic_camera_exact_time", 0x61043C, B("\xdd\x05\xf0\x4a\xf3\x00\xdc\xc9\xd9\xc9\xdc\x05\x30\x44\xf3\x00\xe8\x0f\xa0\xe7\xff\x89\x44\x24\x4c\xda\x7c\x24\x4c"), B("\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90")},
     {"dmm_contact_interval_a", 0xA562C1, B("\x83\xfa\x1e"), B("\x83\xfa\x3d")},
     {"dmm_contact_interval_b", 0xA562EF, B("\x83\xfe\x1e"), B("\x83\xfe\x3d")},
     {"dmm_quiet_sleep_duration", 0xBF5819, B("\x3c\x01"), B("\x3c\x03")},
@@ -76,7 +77,7 @@ static const FixedPatch k_tfu2_fps_patches[] = {
     {"dmm_sweep_delay_initial", 0xA43629, B("\xc7\x86\x50\x16\x00\x00\x3c\x00\x00\x00"), B("\xc7\x86\x50\x16\x00\x00\x78\x00\x00\x00")},
 };
 static const HookGroup* const k_tfu2_fps_helpers[] = {nullptr};
-static const FpsProfile kTfu2Fps = {k_tfu2_fps_patches, 10, k_tfu2_fps_helpers, 0, 0x264, 0x13DB544, 0x284};
+static const FpsProfile kTfu2Fps = {k_tfu2_fps_patches, 11, k_tfu2_fps_helpers, 0, 0x264, 0x13DB544, 0x284};
 
 static const uint32_t kPadSite = 0x6A2A80;
 static const Bytes kPadOriginal = B("\x53\x8b\xce\xff\xd2\xeb\x6d");
