@@ -6,7 +6,7 @@ Cutscenes (Edl_StoreGameState 0x612850) save the cap to [[0x13DB544] + 0x284],
 force 30.0 and Edl_RestoreGameState (0x613050) restores the saved value.
 See docs/tfu2-60fps.md.
 """
-from swtfu.tfu2.fps import minigame, physics_smoothing, update_rate
+from swtfu.tfu2.fps import camera_smoothing, minigame, physics_smoothing, update_rate
 
 LIMIT_OFFSET = 0x264
 CINEMATIC_STATE = 0x13DB544
@@ -48,4 +48,4 @@ PATCHES = (
     ("dmm_sweep_delay_set", 0xA418E0, bytes.fromhex("c781501600003c000000"), bytes.fromhex("c7815016000078000000")),
     ("dmm_sweep_delay_initial", 0xA43629, bytes.fromhex("c786501600003c000000"), bytes.fromhex("c7865016000078000000")),
 )
-HELPERS = (physics_smoothing, update_rate, minigame)
+HELPERS = (physics_smoothing, update_rate, minigame, camera_smoothing)
