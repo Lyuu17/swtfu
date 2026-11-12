@@ -1,4 +1,4 @@
 @echo off
 cd /d "%~dp0"
-python -m swtfu.frame_pacing --seconds 120
+SWTFU-Helper.exe pacing 120
 pause

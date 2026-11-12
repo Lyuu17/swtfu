@@ -14,7 +14,7 @@
 *.exp
 *.pdb
 *.manifest
-native/build/
+
 
 # Generated fixtures, dumps and captures
 *.bin
@@ -32,3 +32,5 @@ Config.before-borderless.xml
 __pycache__/
 *.pyc
 analysis/watch-selftest/
+helper/build/
+SWTFU-Helper.exe

@@ -15,13 +15,11 @@ movies end about when that load finishes, so they never skip. Hook the runner's
 per-frame SetSkippable call: while booting, every movie except the loading-screen
 loop is skippable immediately. Level-load (story) movies keep the original rule.
 """
-import argparse
 import ctypes as C
 from ctypes import wintypes as W
 import struct
 
 from swtfu.patching import apply_code_patch
-from swtfu.game import GameMemory, find_game
 
 PAD_SITE = 0x6A2A80
 PAD_ORIGINAL = bytes.fromhex("538bceffd2eb6d")  # push ebx; mov ecx,esi; call edx; jmp short 6A2AF4
@@ -107,21 +105,3 @@ def apply(game):
 
 def inspect(game):
     return {"controller_reconnect_and_launch_skip": installed_cave(game) is not None}
-
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--inspect", action="store_true")
-    parser.add_argument("--pid", type=int)
-    args = parser.parse_args()
-    game = GameMemory(args.pid or find_game(), writable=not args.inspect)
-    try:
-        if not args.inspect:
-            print("Changed." if apply(game) else "Already applied.")
-        print(inspect(game))
-    finally:
-        game.close()
-
-
-if __name__ == "__main__":
-    main()

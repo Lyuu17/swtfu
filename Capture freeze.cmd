@@ -1,4 +1,4 @@
 @echo off
 cd /d "%~dp0"
-python -m swtfu.hang_diagnostics --capture
+SWTFU-Helper.exe hang capture
 pause

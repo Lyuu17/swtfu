@@ -1,4 +1,4 @@
 @echo off
 cd /d "%~dp0"
-python -m swtfu.borderless --restore
+SWTFU-Helper.exe borderless restore
 pause
