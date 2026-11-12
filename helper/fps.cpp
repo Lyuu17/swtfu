@@ -1,9 +1,9 @@
 // 60 FPS profile: fixed byte patches + helper hook groups, applied as one
 // transaction with exact rollback (mirrors swtfu/tfu1/fps/profile.py).
-// The per-game data (FpsProfile) comes from tables.h.
+// The per-game data (FpsProfile) comes from patches.h.
 #include "fps.h"
 #include "patching.h"
-#include "tables.h"
+#include "patches.h"
 #include <chrono>
 #include <thread>
 

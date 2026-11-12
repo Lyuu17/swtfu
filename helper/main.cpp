@@ -8,6 +8,7 @@
 #include <iostream>
 
 int run_selftest();  // selftest.cpp
+int run_verify(const std::string& path);  // verify.cpp
 
 static const char* kUsage =
     "Usage: SWTFU-Helper <command>\n"
@@ -16,7 +17,8 @@ static const char* kUsage =
     "  borderless apply [--fps60] [--watch-hangs] | restore | inspect\n"
     "  hang capture | watch                    read-only hang dump into analysis\\hangs\n"
     "  pacing [seconds]                        read-only update pacing into analysis\\pacing\n"
-    "  selftest                                offline checks (no game needed)\n";
+    "  selftest                                offline checks (no game needed)\n"
+    "  verify <decoded.exe>                    patch sites match a decoded image (tools/decode_exe.py)\n";
 
 static int fps(const std::string& action) {
     if (action != "apply" && action != "restore" && action != "inspect") throw Error(kUsage);
@@ -52,6 +54,7 @@ static int run(int argc, char** argv) {
     std::vector<std::string> a(argv + 1, argv + argc);
     std::string command = a.empty() ? "" : a[0], action = a.size() > 1 ? a[1] : "";
     if (command == "selftest") return run_selftest();
+    if (command == "verify" && a.size() == 2) return run_verify(a[1]);
     if (command == "fps") return fps(action);
     if (command == "controller") return controller(action == "inspect");
     if (command == "borderless") {

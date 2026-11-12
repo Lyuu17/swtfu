@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <fstream>
 #include <iterator>
-#include "tables.h"
+#include "patches.h"
 
 const GameInfo* const kGames[2] = {&kTfu1Game, &kTfu2Game};
 const char* const kNotRunning = "Launch SWTFU or SWTFU2 through Steam first";

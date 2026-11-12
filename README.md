@@ -52,40 +52,35 @@ Command line: `SWTFU-Helper.exe` with no arguments lists every command
 - **Subtitles after pause.** The line on screen when you open the pause menu
   comes back for its remaining time when you resume (original game bug).
 
-The evidence for each fix is in the docstring of its module in `swtfu/`.
+The evidence for each fix is in the comments of `helper/patches.h`.
 
 ## Repository layout
 
 | Path | What |
 |---|---|
 | `*.cmd` | Launchers (call `SWTFU-Helper.exe`). |
-| `helper/` | **The shipped tool**, in C++ (`CMakeLists.txt`). `fps.cpp` is the profile transaction. `fixes.cpp` holds controller, subtitle, movie, playback and renderer. `borderless.cpp` is the window and config. `diagnostics.cpp` is hang and pacing. `patching.cpp` suspends threads and swaps verified bytes. `game.cpp` attaches to the game process. `selftest.cpp` has offline checks. |
-| `helper/tables.h` | Every patch byte and game identity the tool uses. **Generated** from `swtfu/`; do not edit. |
-| `swtfu/` | Python **reference** for the patches. `patching.py` is shared; `tfu1/` and `tfu2/` hold each game's identity (`game.py`), patch bytes and helper machine code. Not needed to run the tool. |
-| `tools/gen_tables.py` | `swtfu/` → `helper/tables.h`. |
-| `tools/decode_exe.py` | Decrypts either game's SteamStub-wrapped exe into an image for IDA. |
-| `tools/check.py` | Developer check: tests, patch sites, tables up to date, exe selftest. |
-| `tests/` | Patch bytes and hook ownership checked against the decoded game image. |
-| `.github/workflows/` | CI: tables up to date, x86 build, selftest. |
+| `helper/` | **The tool**, in C++ (`CMakeLists.txt`). `fps.cpp` is the profile transaction. `fixes.cpp` holds controller, subtitle, movie, playback and renderer. `borderless.cpp` is the window and config. `diagnostics.cpp` is hang and pacing. `patching.cpp` suspends threads and swaps verified bytes. `game.cpp` attaches to the game process. `selftest.cpp` has offline checks; `verify.cpp` checks patch sites against a decoded image. |
+| `helper/patches.h` | Every patch byte, helper routine and game identity, with the reasoning for each fix. Machine code is one instruction per line with its disassembly. |
+| `tools/decode_exe.py` | Decrypts either game's SteamStub-wrapped exe into an image for IDA and `verify` (needs `pefile`, `pycryptodome`). |
+| `.github/workflows/` | CI: x86 build, selftest. |
 
-Local-only, git-ignored files: `analysis/` (decoded images from `tools/decode_exe.py`,
-IDA databases, research notes, hang dumps and pacing captures), the game executable,
+Local-only, git-ignored files: `analysis/` (decoded images, IDA databases, research
+notes, hang dumps and pacing captures), the game executable,
 `borderless-state.json` (what Restore Borderless undoes),
 `borderless-last-run.json` (last run log) and `Config.before-borderless.xml`
 (config backup).
 
 ## Developing
 
-Requires Visual Studio 2022+ with C++ x86 tools and CMake. Python 3 is needed only
-to change patch bytes or run the tests.
+Requires Visual Studio 2022+ with C++ x86 tools and CMake.
 
 ```powershell
 cmake -S helper -B helper/build -A Win32        # once
 cmake --build helper/build --config Release     # writes SWTFU-Helper.exe to the repo root
-python tools/check.py                           # tests; needs the decoded image in analysis/, not the game
+.\SWTFU-Helper.exe selftest
+python tools/decode_exe.py "<install>\SWTFU.exe" analysis/SWTFU.decoded.exe   # once per game
+.\SWTFU-Helper.exe verify analysis/SWTFU.decoded.exe                         # every patch site's original bytes
 ```
 
-To change a patch, edit the module in `swtfu/` and rebuild. CMake regenerates
-`tables.h` when Python is available. Then run `tools/check.py`.
-Machine code is only ever defined in Python, so the C++ cannot drift from the
-tested bytes.
+To change a patch, edit `helper/patches.h`, keep each instruction's disassembly
+comment accurate, rebuild, and run `verify` against both games' decoded images.
