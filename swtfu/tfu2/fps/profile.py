@@ -6,6 +6,8 @@ Cutscenes (Edl_StoreGameState 0x612850) save the cap to [[0x13DB544] + 0x284],
 force 30.0 and Edl_RestoreGameState (0x613050) restores the saved value.
 See docs/tfu2-60fps.md.
 """
+from swtfu.tfu2.fps import physics_smoothing
+
 LIMIT_OFFSET = 0x264
 CINEMATIC_STATE = 0x13DB544
 SAVED_LIMIT_OFFSET = 0x284
@@ -33,9 +35,12 @@ PATCHES = (
     ("cloth_startup_release", 0xA39093, bytes.fromhex("83f804"), bytes.fromhex("83f808")),
     # Cloth_VerletStep_MotionSuppress (0xA1D200): 3 updates without inertial force -> 6.
     ("cloth_motion_suppression", 0xA1D37C, bytes.fromhex("c7475003000000"), bytes.fromhex("c7475006000000")),
+    # Cloth rotation recovery (sub_A239D0, twin of TFU1 sub_BE9D90): counter = 30.0,
+    # then -1 per call. Load TFU2's 60.0 constant (0xF395BC) instead.
+    ("cloth_rotation_recovery", 0xA23B68, bytes.fromhex("d905f84af300"), bytes.fromhex("d905bc95f300")),
     # DMM sweep delay counter (+0x1650), 60 updates -> 120: reset, setter, constructor.
     ("dmm_sweep_delay_reset", 0xA418CE, bytes.fromhex("c786501600003c000000"), bytes.fromhex("c7865016000078000000")),
     ("dmm_sweep_delay_set", 0xA418E0, bytes.fromhex("c781501600003c000000"), bytes.fromhex("c7815016000078000000")),
     ("dmm_sweep_delay_initial", 0xA43629, bytes.fromhex("c786501600003c000000"), bytes.fromhex("c7865016000078000000")),
 )
-HELPERS = ()
+HELPERS = (physics_smoothing,)

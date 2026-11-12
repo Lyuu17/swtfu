@@ -41,7 +41,7 @@ for game, fps, var in (("tfu1", profile, "kTfu1Fps"), ("tfu2", tfu2_profile, "kT
     groups = []
     for module in fps.HELPERS:
         short = module.__name__.rsplit(".", 1)[1]
-        names = site_names[short]
+        names = getattr(module, "SITE_NAMES", None) or site_names[short]
         assert len(names) == len(module.SITES)
         prefix = f"k_{game}_{short}"
         out.append(f"static const HookSite {prefix}_sites[] = {{")
