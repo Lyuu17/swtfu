@@ -172,6 +172,33 @@ static Display game_display(Game& game) {
             (int)game.u32(renderer + 48), (int)game.u32(renderer + 52)};
 }
 
+// TFU2: no mapped renderer struct; use the game's largest visible top-level window.
+// Windowed = it still has a caption (exclusive fullscreen and borderless have none).
+static HWND main_window(DWORD pid) {
+    struct Search { DWORD pid; HWND best; long area; } search = {pid, nullptr, 0};
+    EnumWindows([](HWND hwnd, LPARAM param) -> BOOL {
+        Search& s = *(Search*)param;
+        DWORD owner = 0;
+        GetWindowThreadProcessId(hwnd, &owner);
+        RECT r;
+        if (owner == s.pid && IsWindowVisible(hwnd) && !GetWindow(hwnd, GW_OWNER) && GetWindowRect(hwnd, &r)) {
+            long area = (r.right - r.left) * (r.bottom - r.top);
+            if (area > s.area) { s.best = hwnd; s.area = area; }
+        }
+        return TRUE;
+    }, (LPARAM)&search);
+    if (!search.best) throw Error("Game window not found");
+    return search.best;
+}
+
+static Display window_of(Game& game) {
+    if (game.is("tfu1")) return game_display(game);
+    HWND hwnd = main_window(game.pid);
+    RECT r = {};
+    GetClientRect(hwnd, &r);
+    return {hwnd, (GetWindowLongW(hwnd, GWL_STYLE) & WS_CAPTION) == WS_CAPTION, 1, (int)r.right, (int)r.bottom};
+}
+
 struct DpiScope {  // per-monitor-v2 coordinates for this thread only
     DPI_AWARENESS_CONTEXT previous = SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     ~DpiScope() { if (previous) SetThreadDpiAwarenessContext(previous); }
@@ -223,8 +250,10 @@ static bool saved_window_matches(const Json& state, Game& game, HWND hwnd) {
 }
 
 static void apply_window(Game& game, Json& state) {
-    Display display = game_display(game);
-    if (!display.windowed) throw Error("D3D is still in exclusive fullscreen; native windowed mode requires a restart");
+    Display display = window_of(game);
+    if (!display.windowed)
+        throw Error(game.is("tfu1") ? "D3D is still in exclusive fullscreen; native windowed mode requires a restart"
+                                    : "The game window has no title bar: set windowed mode in the game's options (Win.Windowed), or it is already borderless");
     DpiScope dpi;
     verify_owner(display.hwnd, game.pid);
     if (!saved_window_matches(state, game, display.hwnd)) {
@@ -289,7 +318,7 @@ int borderless_restore() {
     try { game.reset(new Game(find_game(), false)); }
     catch (const Error& e) { if (std::string(e.what()) != kNotRunning) throw; }
     if (game) {
-        Display display = game_display(*game);
+        Display display = window_of(*game);
         if (saved_window_matches(state, *game, display.hwnd)) {
             DpiScope dpi;
             const Json& w = state["window"];
@@ -297,7 +326,7 @@ int borderless_restore() {
             change_window(display.hwnd, (DWORD)w["style"].u64(), (DWORD)w["exstyle"].u64(), json_rect(w["rect"]));
         }
         // AWL saves its cached XML on exit; restore the key afterwards so it isn't overwritten.
-        wait_for_exit(*game);
+        if (state.has("config")) wait_for_exit(*game);
     }
     if (state.has("config")) {
         const Json& saved = state["config"];
@@ -316,8 +345,11 @@ int borderless_restore() {
 
 int borderless_inspect() {
     Game game(find_game(), false);
-    game.require("tfu1", "Borderless mode");
-    Display d = game_display(game);
+    Display d = window_of(game);
+    if (game.is("tfu2")) {
+        std::cout << "pid " << game.pid << "\ngame tfu2\nwindowed " << d.windowed << "\nsize " << d.width << "x" << d.height << std::endl;
+        return 0;
+    }
     std::cout << "pid " << game.pid << "\nactive_config " << utf8(active_config(game))
               << "\nwindowed " << d.windowed << "\nsize " << d.width << "x" << d.height << std::endl;
     return 0;
@@ -335,7 +367,21 @@ int borderless_apply(bool fps60, bool watch_hangs) {
             if (std::string(e.what()) != kNotRunning) throw;
             game = launch_and_wait();
         }
-        game->require("tfu1", "Borderless mode");
+        log.set("game", Json::str(game->info->name));
+        if (game->is("tfu2")) {
+            // TFU2 handles resizes itself (its D3D reset accepts a pending resize) and its controller
+            // fallback is not sticky, so only the window style changes. Windowed mode is the
+            // game's own Win.Windowed option.
+            if (fps60) {
+                Game writable(Found{game->pid, game->info}, true);
+                log.set("fps_limit_changed", Json::boolean(set_fps_profile(writable, 60)));
+                std::cout << "TFU2 60 FPS is experimental (docs/tfu2-60fps.md)." << std::endl;
+            }
+            apply_window(*game, state);
+            std::cout << "Borderless applied." << (watch_hangs ? " (Hang watch is TFU1-only.)" : "") << std::endl;
+            write_file(log_path, log.dump() + "\n");
+            return 0;
+        }
         std::wstring config = active_config(*game);
         log.set("pid", Json::num((unsigned long long)game->pid));
         log.set("active_config", Json::str(utf8(config)));

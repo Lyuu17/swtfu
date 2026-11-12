@@ -34,7 +34,10 @@ static int fps(const std::string& action) {
 
 static int controller(bool inspect) {
     Game game(find_game(), !inspect);
-    game.require("tfu1", "The controller fix");
+    if (game.is("tfu2")) {  // TFU2's XInput fallback flag is reset every frame (sub_62D250)
+        std::cout << "TFU2 already handles controller reconnects; nothing to apply.\n";
+        return 0;
+    }
     if (!inspect) std::cout << (apply_controller(game) ? "Changed." : "Already applied.") << "\n";
     std::cout << "  controller_reconnect_and_launch_skip: " << (controller_installed(game) ? "on" : "off") << "\n";
     return 0;
