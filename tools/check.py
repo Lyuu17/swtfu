@@ -1,6 +1,6 @@
 """Developer check: run after changing swtfu/ or helper/. No game needed.
 
-1. Python tests of the patch logic (install/rollback against a disposable child).
+1. tests/: patch bytes and hook ownership against the decoded image (analysis/, local only).
 2. helper/tables.h is up to date with swtfu/*.py.
 3. SWTFU-Helper.exe selftest (if built).
 """
@@ -12,8 +12,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 TESTS = [
     "test_camera_ownership", "test_fps_profile", "test_input_ownership",
-    "test_profile_install", "test_smoothing_install", "test_smoothing_ownership",
-    "test_thread_quiescence", "audit_runtime_profile",
+    "test_smoothing_ownership", "audit_runtime_profile",
 ]
 
 
@@ -57,7 +56,7 @@ def check_sites():
 
 def main():
     sys.path.insert(0, str(ROOT))
-    ok = all([run(name, [sys.executable, str(ROOT / "analysis" / f"{name}.py")]) for name in TESTS])
+    ok = all([run(name, [sys.executable, str(ROOT / "tests" / f"{name}.py")]) for name in TESTS])
     ok &= check_sites()
     tables = ROOT / "helper" / "tables.h"
     before = tables.read_bytes()

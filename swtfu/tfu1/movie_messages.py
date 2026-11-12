@@ -4,11 +4,9 @@ The native movie worker renders independently, while its caller sleeps in
 sub_415C80 without returning to WinMain's message pump. Preserve its sleep,
 audio updates and worker lifetime; process a bounded batch of messages there.
 """
-import ctypes as C
-from ctypes import wintypes as W
 import struct
 
-from swtfu.patching import apply_code_patch, ShortCode
+from swtfu.patching import ShortCode
 
 ADDRESS = 0x415D41
 ORIGINAL = bytes.fromhex("8b354049f300")  # mov esi, [LECSleep]
@@ -83,57 +81,3 @@ V4_CODE = message_sleep_code(False) + message_wait_code(128)
 
 def wait_hook(site, address, offset=WAIT_OFFSET):
     return b"\xe8" + struct.pack("<I", (address + offset - site - 5) & 0xFFFFFFFF) + b"\x90"
-
-
-def apply_movie_message_fix(game):
-    current = game.read(ADDRESS, len(ORIGINAL))
-    address = None
-    previous_wait_offset = None
-    if current[:1] == b"\xbe" and current[-1:] == b"\x90":
-        previous, = struct.unpack_from("<I", current, 1)
-        if game.read(previous, len(CODE)) == CODE:
-            address = previous
-            previous_wait_offset = WAIT_OFFSET
-        elif game.read(previous, len(V4_CODE)) == V4_CODE:
-            previous_wait_offset = 128
-        elif game.read(previous, 128) != message_sleep_code(False):
-            raise RuntimeError("Unrecognized movie helper; no movie patch applied")
-    elif current != ORIGINAL:
-        raise RuntimeError("Unsupported movie wait code; no movie patch applied")
-    for site in WAIT_SITES:
-        allowed = (WAIT_ORIGINAL, wait_hook(site, previous, previous_wait_offset)) if previous_wait_offset else (WAIT_ORIGINAL,)
-        if game.read(site, len(WAIT_ORIGINAL)) not in allowed:
-            raise RuntimeError(f"Unsupported movie worker wait at {site:#x}; no movie patch applied")
-    if address:
-        changed = False
-        for site in WAIT_SITES:
-            changed |= apply_code_patch(game, site, WAIT_ORIGINAL, wait_hook(site, address))
-        return changed
-    kernel = game.kernel
-    kernel.VirtualAllocEx.argtypes = [W.HANDLE, C.c_void_p, C.c_size_t, W.DWORD, W.DWORD]
-    kernel.VirtualAllocEx.restype = C.c_void_p
-    kernel.VirtualFreeEx.argtypes = [W.HANDLE, C.c_void_p, C.c_size_t, W.DWORD]
-    kernel.VirtualFreeEx.restype = W.BOOL
-    address = kernel.VirtualAllocEx(game.handle, None, 4096, 0x3000, 0x04)
-    if not address:
-        raise C.WinError(C.get_last_error())
-    if address > 0xFFFFFFFF:
-        kernel.VirtualFreeEx(game.handle, address, 0, 0x8000)
-        raise RuntimeError("Movie helper allocation is outside x86 address space")
-    # Publish executable code before redirecting any caller. The allocation
-    # belongs to this process lifetime; installed game files remain untouched.
-    try:
-        apply_code_patch(game, address, bytes(len(CODE)), CODE)
-        protection = W.DWORD()
-        if not kernel.VirtualProtectEx(game.handle, address, 4096, 0x20, C.byref(protection)):
-            raise C.WinError(C.get_last_error())
-    except BaseException:
-        kernel.VirtualFreeEx(game.handle, address, 0, 0x8000)
-        raise
-    # Retain the page if hook publication reports an error: a protection or
-    # thread-resume failure can occur after the verified hook was written.
-    patched = b"\xbe" + struct.pack("<I", address) + b"\x90"
-    changed = apply_code_patch(game, ADDRESS, current, patched)
-    for site in WAIT_SITES:
-        changed |= apply_code_patch(game, site, game.read(site, 6), wait_hook(site, address))
-    return changed

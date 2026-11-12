@@ -25,7 +25,7 @@ static int fps(const std::string& action) {
         bool changed = set_fps_profile(game, action == "apply" ? 60 : 30);
         std::cout << (changed ? "Changed." : "Already set.") << "\n";
         if (action == "apply" && game.is("tfu2"))
-            std::cout << "TFU2 60 FPS is experimental; open items are listed in docs/tfu2-60fps.md.\n"
+            std::cout << "TFU2 60 FPS is experimental.\n"
                          "Restore 30 FPS.cmd or a restart undoes it.\n";
     }
     for (auto& site : inspect_fps(game)) std::cout << "  " << site.first << ": " << site.second << "\n";

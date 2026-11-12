@@ -6,7 +6,7 @@ calls so background updates cannot inflate its per-thread display counter.
 Ignore minimized/duplicate client-size notifications that needlessly reset
 movie textures. Genuine positive-size changes keep the original resize path.
 """
-from swtfu.patching import apply_code_patch, ShortCode
+from swtfu.patching import ShortCode
 
 RESIZE_ADDRESS = 0xB984A0
 RESIZE_ORIGINAL = bytes.fromhex(
@@ -111,22 +111,3 @@ PATCHES = [
     ("balanced_cursor", CURSOR_ADDRESS, CURSOR_ORIGINAL, CURSOR_PATCHED),
     ("background_updates", BACKGROUND_ADDRESS, BACKGROUND_ORIGINAL, BACKGROUND_PATCHED),
 ]
-
-
-def apply_playback_fixes(game):
-    from swtfu.tfu1.movie_messages import apply_movie_message_fix
-    renderer = game.u32(0x13BB5D4)
-    if not renderer or game.u32(renderer + 80) != 1:
-        raise RuntimeError("Background playback fixes require native windowed mode")
-    if game.u32(0x10ED0A0) not in (0, 1):
-        raise RuntimeError("Unexpected native cursor state; no playback patches applied")
-    for name, address, original, patched in PATCHES:
-        allowed = (original, patched, CURSOR_V4) if address == CURSOR_ADDRESS else (original, patched)
-        if game.read(address, len(original)) not in allowed:
-            raise RuntimeError(f"Unsupported {name} code; no playback patches applied")
-    # Enable the background loop last, after its cursor-count guard exists.
-    result = {"movie_window_messages": apply_movie_message_fix(game)}
-    result.update({name: apply_code_patch(game, address,
-                   CURSOR_V4 if address == CURSOR_ADDRESS and game.read(address, len(original)) == CURSOR_V4 else original, patched)
-                   for name, address, original, patched in PATCHES})
-    return result

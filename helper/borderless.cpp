@@ -378,7 +378,7 @@ int borderless_apply(bool fps60, bool watch_hangs) {
                 log.set("movie_messages_changed", Json::boolean(set_hook_group(writable, kTfu2MovieMessages, true)));
                 if (fps60) {
                     log.set("fps_limit_changed", Json::boolean(set_fps_profile(writable, 60)));
-                    std::cout << "TFU2 60 FPS is experimental (docs/tfu2-60fps.md)." << std::endl;
+                    std::cout << "TFU2 60 FPS is experimental." << std::endl;
                 }
             }
             apply_window(*game, state);

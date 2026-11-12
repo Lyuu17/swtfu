@@ -15,11 +15,8 @@ movies end about when that load finishes, so they never skip. Hook the runner's
 per-frame SetSkippable call: while booting, every movie except the loading-screen
 loop is skippable immediately. Level-load (story) movies keep the original rule.
 """
-import ctypes as C
-from ctypes import wintypes as W
 import struct
 
-from swtfu.patching import apply_code_patch
 
 PAD_SITE = 0x6A2A80
 PAD_ORIGINAL = bytes.fromhex("538bceffd2eb6d")  # push ebx; mov ecx,esi; call edx; jmp short 6A2AF4
@@ -56,52 +53,3 @@ def hooks(cave):
 
 def page(cave):
     return pad_code(cave).ljust(SKIP_OFFSET, b"\xcc") + skip_code(cave + SKIP_OFFSET)
-
-
-def installed_cave(game):
-    current = game.read(PAD_SITE, len(PAD_ORIGINAL))
-    skip = game.read(SKIP_SITE, len(SKIP_ORIGINAL))
-    if current == PAD_ORIGINAL and skip == SKIP_ORIGINAL:
-        return None
-    cave = (PAD_SITE + 5 + struct.unpack_from("<i", current, 1)[0]) & 0xFFFFFFFF
-    if (current[:1] != b"\xe9" or [game.read(a, len(o)) for a, o, _ in hooks(cave)] != [p for _, _, p in hooks(cave)]
-            or game.read(cave, len(page(cave))) != page(cave)):
-        raise RuntimeError("Unsupported controller/movie code; no code changed")
-    return cave
-
-
-def allocate_cave(game):
-    kernel = game.kernel
-    kernel.VirtualAllocEx.argtypes = [W.HANDLE, C.c_void_p, C.c_size_t, W.DWORD, W.DWORD]
-    kernel.VirtualAllocEx.restype = C.c_void_p
-    kernel.VirtualFreeEx.argtypes = [W.HANDLE, C.c_void_p, C.c_size_t, W.DWORD]
-    kernel.VirtualProtectEx.argtypes = [W.HANDLE, C.c_void_p, C.c_size_t, W.DWORD, C.POINTER(W.DWORD)]
-    address = kernel.VirtualAllocEx(game.handle, None, 4096, 0x3000, 0x04)
-    if not address:
-        raise C.WinError(C.get_last_error())
-    try:
-        if address > 0xFFFFFFFF:
-            raise RuntimeError("Controller helper is outside the x86 address space")
-        code = page(address)
-        apply_code_patch(game, address, bytes(len(code)), code)
-        old = W.DWORD()
-        if not kernel.VirtualProtectEx(game.handle, address, 4096, 0x20, C.byref(old)):
-            raise C.WinError(C.get_last_error())
-        return address
-    except BaseException:
-        kernel.VirtualFreeEx(game.handle, address, 0, 0x8000)
-        raise
-
-
-def apply(game):
-    """Install both hooks; returns True if anything changed. Idempotent."""
-    if installed_cave(game) is not None:
-        return False
-    cave = allocate_cave(game)  # ponytail: page stays allocated until exit; returns may still be in flight
-    for address, original, patched in hooks(cave):
-        apply_code_patch(game, address, original, patched)
-    return True
-
-
-def inspect(game):
-    return {"controller_reconnect_and_launch_skip": installed_cave(game) is not None}

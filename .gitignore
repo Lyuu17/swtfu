@@ -16,13 +16,13 @@
 *.manifest
 
 
+# Local research workspace: decoded images, IDBs, notes, dumps, captures
+analysis/
+
 # Generated fixtures, dumps and captures
 *.bin
 *.dmp
 *.log
-analysis/decompiled/
-analysis/hangs/
-analysis/pacing/
 
 # Runtime state written by the helpers
 borderless-state.json
@@ -31,6 +31,5 @@ Config.before-borderless.xml
 
 __pycache__/
 *.pyc
-analysis/watch-selftest/
 helper/build/
 SWTFU-Helper.exe

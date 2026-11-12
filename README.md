@@ -6,8 +6,8 @@ TFU1 also gets borderless fullscreen, controller reconnect and skippable launch 
 
 | Game | Status |
 |---|---|
-| TFU1 (`SWTFU.exe`, SHA-256 `1c156705…92032`) | 60 FPS profile, borderless, controller: done. See [`docs/tfu1-60fps.md`](docs/tfu1-60fps.md). |
-| TFU2 (`SWTFU2.exe`, SHA-256 `79874d83…65167`) | 60 FPS profile **experimental**: cap, cutscenes, DMM, cloth, physics and camera smoothing, trails, Force-grip integration and the mash minigame. Borderless works (window only). A few leads are still open. See [`docs/tfu2-60fps.md`](docs/tfu2-60fps.md). |
+| TFU1 (`SWTFU.exe`, SHA-256 `1c156705…92032`) | 60 FPS profile, borderless, controller: done. |
+| TFU2 (`SWTFU2.exe`, SHA-256 `79874d83…65167`) | 60 FPS profile **experimental**: cap, cutscenes, DMM, cloth, physics and camera smoothing, trails, Force-grip integration and the mash minigame. Borderless works (window only). A few leads are still open. |
 
 Nothing on disk is modified. `SWTFU-Helper.exe` recognises whichever game is running
 (process name, executable hash and code signature) and patches the **running** game's memory.
@@ -52,23 +52,24 @@ Command line: `SWTFU-Helper.exe` with no arguments lists every command
 - **Subtitles after pause.** The line on screen when you open the pause menu
   comes back for its remaining time when you resume (original game bug).
 
-Known open items and the evidence for each fix are tracked per game in `docs/`.
+The evidence for each fix is in the docstring of its module in `swtfu/`.
 
 ## Repository layout
 
 | Path | What |
 |---|---|
 | `*.cmd` | Launchers (call `SWTFU-Helper.exe`). |
-| `helper/` | **The shipped tool**, in C++ (`CMakeLists.txt`). `fps.cpp` is the profile transaction. `fixes.cpp` holds controller, movie, playback and renderer. `borderless.cpp` is the window and config. `diagnostics.cpp` is hang and pacing. `patching.cpp` suspends threads and swaps verified bytes. `game.cpp` attaches to the game process. `selftest.cpp` has offline checks. |
+| `helper/` | **The shipped tool**, in C++ (`CMakeLists.txt`). `fps.cpp` is the profile transaction. `fixes.cpp` holds controller, subtitle, movie, playback and renderer. `borderless.cpp` is the window and config. `diagnostics.cpp` is hang and pacing. `patching.cpp` suspends threads and swaps verified bytes. `game.cpp` attaches to the game process. `selftest.cpp` has offline checks. |
 | `helper/tables.h` | Every patch byte and game identity the tool uses. **Generated** from `swtfu/`; do not edit. |
-| `swtfu/` | Python **reference** for the patches. `patching.py` is shared; `tfu1/` and `tfu2/` hold each game's identity (`game.py`), patch bytes and helper machine code. The install/rollback logic is tested. Not needed to run the tool. |
+| `swtfu/` | Python **reference** for the patches. `patching.py` is shared; `tfu1/` and `tfu2/` hold each game's identity (`game.py`), patch bytes and helper machine code. Not needed to run the tool. |
 | `tools/gen_tables.py` | `swtfu/` → `helper/tables.h`. |
 | `tools/decode_exe.py` | Decrypts either game's SteamStub-wrapped exe into an image for IDA. |
-| `tools/check.py` | Developer check: Python patch tests, tables up to date, exe selftest. |
-| `docs/` | Per-game 60 FPS trackers (`tfu1-60fps.md`, `tfu2-60fps.md`). |
-| `analysis/` | TFU1 reverse-engineering research (audits, probes, fixtures, notes), see [`analysis/README.md`](analysis/README.md). `analysis/tfu2/` holds the TFU2 analysis image and IDB. |
+| `tools/check.py` | Developer check: tests, patch sites, tables up to date, exe selftest. |
+| `tests/` | Patch bytes and hook ownership checked against the decoded game image. |
+| `.github/workflows/` | CI: tables up to date, x86 build, selftest. |
 
-Local-only, git-ignored files: the game executable and IDA databases,
+Local-only, git-ignored files: `analysis/` (decoded images from `tools/decode_exe.py`,
+IDA databases, research notes, hang dumps and pacing captures), the game executable,
 `borderless-state.json` (what Restore Borderless undoes),
 `borderless-last-run.json` (last run log) and `Config.before-borderless.xml`
 (config backup).
@@ -81,7 +82,7 @@ to change patch bytes or run the tests.
 ```powershell
 cmake -S helper -B helper/build -A Win32        # once
 cmake --build helper/build --config Release     # writes SWTFU-Helper.exe to the repo root
-python tools/check.py                           # tests; no game needed
+python tools/check.py                           # tests; needs the decoded image in analysis/, not the game
 ```
 
 To change a patch, edit the module in `swtfu/` and rebuild. CMake regenerates

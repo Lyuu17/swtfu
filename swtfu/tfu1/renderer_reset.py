@@ -9,7 +9,6 @@ Only the supported hash-checked running game is changed. Restart restores
 the original code.
 """
 
-from swtfu.patching import apply_code_patch
 
 ADDRESS = 0xB5DD90
 ORIGINAL = bytes.fromhex(
@@ -24,6 +23,3 @@ replacement[0x4A:0x4C] = bytes.fromhex("7420")
 replacement[0x4E:0x50] = bytes.fromhex("751c")
 replacement[0x6C:0x70] = bytes.fromhex("33c05ec3")
 PATCHED = bytes(replacement)
-
-def apply_fix(game):
-    return apply_code_patch(game, ADDRESS, ORIGINAL, PATCHED)

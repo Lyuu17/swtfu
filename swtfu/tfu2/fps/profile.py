@@ -4,7 +4,6 @@ Cap: float at [[gGameObj 0x13CB118] + 0x264], read every frame by Game_FrameTick
 (0x4142C0) -> Frame_ComputeDt (0x4098F0), which snaps gGameplayDt to 1/cap.
 Cutscenes (Edl_StoreGameState 0x612850) save the cap to [[0x13DB544] + 0x284],
 force 30.0 and Edl_RestoreGameState (0x613050) restores the saved value.
-See docs/tfu2-60fps.md.
 """
 from swtfu.tfu2.fps import camera_smoothing, minigame, physics_smoothing, update_rate
 
@@ -34,7 +33,7 @@ PATCHES = (
     # 1/30 as the dt of sub_803190 (per-channel timers) and of vfunc +0x8C.
     ("channel_timers_dt", 0x80613C, bytes.fromhex("d905a84df300"), bytes.fromhex("d9051851f300")),
     ("channel_vfunc_dt", 0x806163, bytes.fromhex("d905a84df300"), bytes.fromhex("d9051851f300")),
-    # Ports of TFU1 fixes (same engine code, matched by shape; see docs/tfu2-60fps.md).
+    # Ports of TFU1 fixes (same engine code, matched by shape).
     # DMM_ContactMessages (0xA56220): `frame - stamp > 30` on the per-update counter
     # dword_13CB13C. >61 keeps the 31/30 s interval at 60 updates/s.
     ("dmm_contact_interval_a", 0xA562C1, bytes.fromhex("83fa1e"), bytes.fromhex("83fa3d")),

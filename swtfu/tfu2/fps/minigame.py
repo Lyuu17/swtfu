@@ -9,7 +9,7 @@ together or the balance of marker speed, fill and decay changes):
 Each step is scaled by 30/cap. `[+0x3C] *= -1.0` (0x987872) is the marker
 bounce, an event rather than a rate, so it is left alone.
 Assumed to be the Gorog QTE (PCGamingWiki: buggy at high FPS); no "Gorog"/"QTE"
-strings exist, see docs/tfu2-60fps.md.
+strings exist.
 """
 from swtfu.patching import ShortCode
 
