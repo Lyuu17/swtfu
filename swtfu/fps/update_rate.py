@@ -5,6 +5,7 @@ helper that replays the load and multiplies the register by 30 / cap
 (x1 at 30 including cinematics, x0.5 at 60).
 - Trail_AdvanceUVScroll (0x4677D0), Trail_SimStep (0x469280): UV offset (+0xE74)
   += mUV_Scroll_Speed (+0xE78) once per update, no frame time.
+- PlayerSith_SteerAccum_Update (0x7B3AD0): Force steering accumulates rate * input per update.
 - ActionDirectLocomotionAI_StrafeNormalNav_Update (0x874A40): turn step capped
   at a fixed 5 degrees per update (0xFB9154) before sub_872830.
 """
@@ -18,6 +19,10 @@ SITES = (
     (0x46781D, bytes.fromhex("f30f108178"+"0e0000"), "trail_uv_scroll_advance", 0),
     (0x4692D2, bytes.fromhex("f30f108678"+"0e0000"), "trail_uv_scroll_simstep", 0),
     (0x874BBE, bytes.fromhex("f30f10155491fb00"), "ai_strafe_turn_step_cap", 2),
+    # PlayerSith_SteerAccum_Update (0x7B3AD0, PlayerSith vtable 0xFBA660 +0x1C, run
+    # once per update via sub_C32F50): Force-held steering +0x57B4 -= rate * -input,
+    # no frame time. Scale the rate (+0x5820, its only reader) by 30/cap.
+    (0x7B3B5C, bytes.fromhex("f30f108e20580000"), "force_steer_rate", 1),
 )
 STRIDE = 64
 
