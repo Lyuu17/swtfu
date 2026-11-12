@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  helper:
+    # Game-dependent checks (tools/check.py tests, site bytes) need the decoded
+    # game image, which is not in the repository; run those locally.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: tables.h is up to date with swtfu/*.py
+        shell: bash
+        run: |
+          python tools/gen_tables.py
+          git diff --exit-code helper/tables.h
+
+      - name: Build SWTFU-Helper (x86 Release)
+        run: |
+          cmake -S helper -B helper/build -A Win32
+          cmake --build helper/build --config Release
+
+      - name: Selftest
+        run: .\SWTFU-Helper.exe selftest
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SWTFU-Helper
+          path: SWTFU-Helper.exe
