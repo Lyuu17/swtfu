@@ -12,12 +12,14 @@ struct GameInfo {
     const char* sha256;       // of the executable on disk
     Bytes signature;          // first code bytes at 0x401000 after SteamStub decryption
     uint32_t app_global;      // address of the gApp pointer, 0 = not mapped yet
+    uint32_t steam_appid;     // steam://rungameid/<id> starts it
 };
 extern const GameInfo* const kGames[2];
 
+const GameInfo& game_named(const std::string& name);  // "tfu1" / "tfu2", else throws
+
 struct Found { DWORD pid; const GameInfo* info; };
-Found find_game();  // throws kNotRunning when no supported game runs
-extern const char* const kNotRunning;
+Found find_game(const GameInfo& game);  // throws NotRunning when that game is not running
 
 struct Game {
     HANDLE handle = nullptr;

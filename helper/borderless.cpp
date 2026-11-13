@@ -289,13 +289,14 @@ static void wait_for_exit(Game& game) {
     while (game.running()) sleep_ms(500);
 }
 
-static std::unique_ptr<Game> launch_and_wait() {
-    ShellExecuteW(nullptr, L"open", L"steam://rungameid/32430", nullptr, nullptr, SW_SHOWNORMAL);
+static std::unique_ptr<Game> launch_and_wait(const GameInfo& info) {
+    std::wstring url = L"steam://rungameid/" + std::to_wstring(info.steam_appid);
+    ShellExecuteW(nullptr, L"open", url.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
     std::cout << "Waiting for the Steam game to initialize (up to 180 seconds)." << std::endl;
     std::string last = "Game not started";
     for (auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(180); std::chrono::steady_clock::now() < deadline; sleep_ms(500)) {
         try {
-            std::unique_ptr<Game> game(new Game(find_game(), false));
+            std::unique_ptr<Game> game(new Game(find_game(info), false));
             Display display = game_display(*game);
             if (display.hwnd && display.device) return game;
         } catch (const std::exception& e) {
@@ -313,12 +314,12 @@ static Json load_state() {
     return Json::parse(read_file(state_path()));
 }
 
-int borderless_restore() {
+int borderless_restore(const GameInfo& info) {
     Json state = load_state();
     if (state.keys.empty()) { std::cout << "No borderless changes recorded." << std::endl; return 0; }
     std::unique_ptr<Game> game;
-    try { game.reset(new Game(find_game(), false)); }
-    catch (const Error& e) { if (std::string(e.what()) != kNotRunning) throw; }
+    try { game.reset(new Game(find_game(info), false)); }
+    catch (const NotRunning&) {}
     if (game) {
         Display display = window_of(*game);
         if (saved_window_matches(state, *game, display.hwnd)) {
@@ -345,8 +346,8 @@ int borderless_restore() {
     return 0;
 }
 
-int borderless_inspect() {
-    Game game(find_game(), false);
+int borderless_inspect(const GameInfo& info) {
+    Game game(find_game(info), false);
     Display d = window_of(game);
     if (game.is("tfu2")) {
         std::cout << "pid " << game.pid << "\ngame tfu2\nwindowed " << d.windowed << "\nsize " << d.width << "x" << d.height << std::endl;
@@ -357,18 +358,15 @@ int borderless_inspect() {
     return 0;
 }
 
-int borderless_apply(bool fps60, bool watch_hangs) {
+int borderless_apply(const GameInfo& info, bool fps60, bool watch_hangs) {
     Json log = Json::object();
     log.set("patch_profile", Json::str("native60-borderless-playback-v16-cpp"));
     std::wstring log_path = exe_dir() + L"\\borderless-last-run.json";
     std::unique_ptr<Game> game;
     try {
         Json state = load_state();
-        try { game.reset(new Game(find_game(), false)); }
-        catch (const Error& e) {
-            if (std::string(e.what()) != kNotRunning) throw;
-            game = launch_and_wait();
-        }
+        try { game.reset(new Game(find_game(info), false)); }
+        catch (const NotRunning&) { game = launch_and_wait(info); }
         log.set("game", Json::str(game->info->name));
         if (game->is("tfu2")) {
             // TFU2 handles resizes itself (its D3D reset accepts a pending resize) and its controller
@@ -395,7 +393,7 @@ int borderless_apply(bool fps60, bool watch_hangs) {
             wait_for_exit(*game);
             game.reset();
             prepare_config(config, state);
-            game = launch_and_wait();
+            game = launch_and_wait(info);
         }
         {
             // Fix the healthy-device resize path before the border/size change generates WM_SIZE.

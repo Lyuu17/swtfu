@@ -34,6 +34,8 @@ struct FpsProfile {
 struct Error : std::runtime_error {
     explicit Error(const std::string& message) : std::runtime_error(message) {}
 };
+// The requested game is not running (callers that can start it catch this).
+struct NotRunning : Error { using Error::Error; };
 // A thread is executing (or will return into) code we want to replace; retry.
 struct CodeBusy : Error { CodeBusy() : Error("code busy") {} };
 

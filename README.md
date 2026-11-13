@@ -9,25 +9,31 @@ TFU1 also gets borderless fullscreen, controller reconnect and skippable launch 
 | TFU1 (`SWTFU.exe`, SHA-256 `1c156705…92032`) | 60 FPS profile, borderless, controller: done. |
 | TFU2 (`SWTFU2.exe`, SHA-256 `79874d83…65167`) | 60 FPS profile **experimental**: cap, cutscenes, DMM, cloth, physics and camera smoothing, trails, Force-grip integration and the mash minigame. Borderless works (window only). A few leads are still open. |
 
-Nothing on disk is modified. `SWTFU-Helper.exe` recognises whichever game is running
-(process name, executable hash and code signature) and patches the **running** game's memory.
-Restarting the game removes every change. No Python or runtime is required.
+Nothing on disk is modified. `SWTFU-Helper.exe` is always told which game to work on
+(`tfu1` or `tfu2`), checks that game's process (name, executable hash and code signature)
+and patches the **running** game's memory. Restarting the game removes every change.
+No Python or runtime is required.
 
 ## Use
 
-Start the game through Steam, then double-click one of (TFU2: 60 FPS and borderless launchers work; hang and pacing capture are TFU1-only):
+Start the game through Steam, then double-click the launcher for that game:
 
 | Launcher | Does |
 |---|---|
-| **Apply 60 FPS + Borderless.cmd** | Everything below. Starts the game if needed. On first use it waits for you to close an exclusive-fullscreen game once, switches the game to native windowed mode and relaunches it. Then it watches for 10 minutes and saves a dump if the window freezes. |
-| **Apply 60 FPS.cmd** | 60 FPS profile + controller fixes only. |
-| **Restore 30 FPS.cmd** | Undo the 60 FPS profile in the running game. |
-| **Restore Borderless.cmd** | Restore the window and the original `VideoWindowed` setting (waits for the game to exit, because the game rewrites its config on close). |
-| **Capture freeze.cmd** | Save a hang dump + snapshot to `analysis\hangs\`. |
-| **Record frame pacing.cmd** | Record 120 s of update timing to `analysis\pacing\`. |
+| **TFU1 - Apply 60 FPS + Borderless.cmd** | Everything below. Starts TFU1 if needed. On first use it waits for you to close an exclusive-fullscreen game once, switches the game to native windowed mode and relaunches it. Then it watches for 10 minutes and saves a dump if the window freezes. |
+| **TFU1 - Apply 60 FPS.cmd** | 60 FPS profile, controller fixes and the subtitle-after-pause fix only. |
+| **TFU1 - Restore 30 FPS.cmd** | Undo the 60 FPS profile in the running game. |
+| **TFU1 - Restore Borderless.cmd** | Restore the window and the original `VideoWindowed` setting (waits for the game to exit, because the game rewrites its config on close). |
+| **TFU1 - Capture freeze.cmd** | Save a hang dump + snapshot to `analysis\hangs\`. |
+| **TFU1 - Record frame pacing.cmd** | Record 120 s of update timing to `analysis\pacing\`. |
+| **TFU2 - Apply 60 FPS + Borderless.cmd** | Starts TFU2 if needed, 60 FPS profile (experimental), borderless window. |
+| **TFU2 - Apply 60 FPS.cmd** | 60 FPS profile only (experimental). |
+| **TFU2 - Restore 30 FPS.cmd** | Undo the 60 FPS profile in the running game. |
+| **TFU2 - Restore Borderless.cmd** | Restore the window. |
 
-Command line: `SWTFU-Helper.exe` with no arguments lists every command
-(`fps apply|restore|inspect`, `controller`, `borderless …`, `hang …`, `pacing`, `selftest`).
+Command line: `SWTFU-Helper.exe <tfu1|tfu2> <command>`; with no arguments it lists every
+command (`fps apply|restore|inspect`, `controller`, `borderless …`, `hang …`, `pacing`,
+`verify`). `SWTFU-Helper.exe selftest` needs no game.
 
 ## What the fixes do
 
@@ -79,7 +85,7 @@ cmake -S helper -B helper/build -A Win32        # once
 cmake --build helper/build --config Release     # writes SWTFU-Helper.exe to the repo root
 .\SWTFU-Helper.exe selftest
 python tools/decode_exe.py "<install>\SWTFU.exe" analysis/SWTFU.decoded.exe   # once per game
-.\SWTFU-Helper.exe verify analysis/SWTFU.decoded.exe                         # every patch site's original bytes
+.\SWTFU-Helper.exe tfu1 verify analysis/SWTFU.decoded.exe                         # every patch site's original bytes
 ```
 
 To change a patch, edit `helper/tfu1.h` or `helper/tfu2.h`, keep each instruction's disassembly

@@ -11,7 +11,7 @@ static const GameInfo kTfu2Game = {"tfu2", L"swtfu2.exe", "79874d834449c3ae82925
     + B("\x59")                  // +00a: pop ecx
     + B("\xc3")                  // +00b: ret
     + Bytes(4, '\xcc')           // +00c: padding (4)
-, 0x13CB118};
+, 0x13CB118, 32500};
 
 
 

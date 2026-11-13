@@ -1,4 +1,4 @@
 @echo off
 cd /d "%~dp0"
-SWTFU-Helper.exe hang capture
+SWTFU-Helper.exe tfu2 fps apply
 pause

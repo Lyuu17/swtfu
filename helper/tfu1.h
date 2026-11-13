@@ -12,7 +12,7 @@ static const GameInfo kTfu1Game = {"tfu1", L"swtfu.exe", "1c156705548fce9e33fa34
     + B("\x83\xc4\x08")          // +009: add esp, 8
     + B("\xc2\x10\x00")          // +00c: ret 0x10
     + B("\xcc")                  // +00f: int3
-, 0x1240440};
+, 0x1240440, 32430};
 
 // Native FPS profile with investigated cinematic, DMM, and cloth timing fixes.
 static const FixedPatch k_tfu1_fps_patches[] = {

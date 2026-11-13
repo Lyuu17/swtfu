@@ -8,7 +8,11 @@
 #include "tfu2.h"
 
 const GameInfo* const kGames[2] = {&kTfu1Game, &kTfu2Game};
-const char* const kNotRunning = "Launch SWTFU or SWTFU2 through Steam first";
+const GameInfo& game_named(const std::string& name) {
+    for (const GameInfo* game : kGames)
+        if (name == game->name) return *game;
+    throw Error("First argument must be tfu1 or tfu2");
+}
 
 std::string hex(uint32_t value) {
     char text[16];
@@ -128,15 +132,15 @@ void Game::require(const char* name, const char* feature) const {
     if (!is(name)) throw Error(std::string(feature) + " is not supported for " + info->name + " yet");
 }
 
-Found find_game() {
+Found find_game(const GameInfo& game) {
     HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (snapshot == INVALID_HANDLE_VALUE) fail_win("CreateToolhelp32Snapshot");
-    std::vector<Found> found;
+    std::vector<DWORD> found;
     PROCESSENTRY32W entry = {sizeof(entry)};
     for (BOOL ok = Process32FirstW(snapshot, &entry); ok; ok = Process32NextW(snapshot, &entry))
-        for (const GameInfo* game : kGames)
-            if (!_wcsicmp(entry.szExeFile, game->exe)) found.push_back({entry.th32ProcessID, game});
+        if (!_wcsicmp(entry.szExeFile, game.exe)) found.push_back(entry.th32ProcessID);
     CloseHandle(snapshot);
-    if (found.size() != 1) throw Error(found.empty() ? kNotRunning : "More than one game is running; close one");
-    return found[0];
+    if (found.empty()) throw NotRunning(std::string(game.name) + " is not running; launch it through Steam first");
+    if (found.size() > 1) throw Error(std::string("More than one ") + game.name + " process is running; close one");
+    return {found[0], &game};
 }

@@ -58,12 +58,12 @@ void add_profile(std::vector<Check>& checks, const FpsProfile& profile) {
 
 }  // namespace
 
-int run_verify(const std::string& path) {
+int run_verify(const GameInfo& info, const std::string& path) {
     Image image(path);
+    if (image.read(0x401000, info.signature.size()) != info.signature)
+        throw Error(std::string("Not a decoded ") + info.name + " image (code signature at 0x401000 differs)");
     std::vector<Check> checks;
-    const GameInfo* game = nullptr;
-    if (image.read(0x401000, kTfu1Game.signature.size()) == kTfu1Game.signature) {
-        game = &kTfu1Game;
+    if (std::string(info.name) == kTfu1Game.name) {  // by name: each TU has its own copy of the records
         add_profile(checks, kTfu1Fps);
         checks.push_back({"controller_reconnect", kPadSite, kPadOriginal});
         checks.push_back({"launch_movie_skip", kSkipSite, kSkipOriginal});
@@ -72,13 +72,10 @@ int run_verify(const std::string& path) {
         for (const SubtitleSite& site : kSubtitleSites) checks.push_back({site.name, site.address, site.original});
         for (const FixedPatch& patch : kPlaybackPatches) checks.push_back({patch.name, patch.address, patch.original});
         checks.push_back({kRendererReset.name, kRendererReset.address, kRendererReset.original});
-    } else if (image.read(0x401000, kTfu2Game.signature.size()) == kTfu2Game.signature) {
-        game = &kTfu2Game;
+    } else {
         add_profile(checks, kTfu2Fps);
         for (int i = 0; i < kTfu2MovieMessages.count; ++i)
             checks.push_back({kTfu2MovieMessages.sites[i].name, kTfu2MovieMessages.sites[i].address, kTfu2MovieMessages.sites[i].original});
-    } else {
-        throw Error("Not a decoded image of a supported game (code signature at 0x401000 differs)");
     }
     int bad = 0;
     for (const Check& check : checks)
@@ -86,6 +83,6 @@ int run_verify(const std::string& path) {
             std::cout << "FAIL " << check.name << " at " << hex(check.address) << "\n";
             ++bad;
         }
-    std::cout << game->name << ": " << checks.size() - bad << "/" << checks.size() << " patch sites match\n";
+    std::cout << info.name << ": " << checks.size() - bad << "/" << checks.size() << " patch sites match\n";
     return bad ? 1 : 0;
 }
